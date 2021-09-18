@@ -2,14 +2,15 @@ use bitcoin::blockdata::opcodes::all::OP_RETURN;
 use bitcoin::blockdata::script::Instruction;
 use bitcoin::{Script, Txid};
 use blocks_iterator::Config;
+use chrono::{Datelike, NaiveDateTime};
 use env_logger::Env;
 use log::info;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use structopt::StructOpt;
-use chrono::NaiveDateTime;
 
 #[derive(Debug)]
 enum Error {
@@ -25,6 +26,9 @@ impl From<RecvError> for Error {
 fn main() -> Result<(), Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     info!("start");
+
+    let mut map = BTreeMap::new();
+
     let mut config = Config::from_args();
     config.skip_prevout = true;
     let (send, recv) = sync_channel(100);
@@ -36,13 +40,19 @@ fn main() -> Result<(), Error> {
                     if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
                         let txid = tx.txid();
                         let page_dirname = page_dirname(&txid);
+                        let date =
+                            NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
+                        let year_month = year_month(&date);
+
                         if !page_dirname.exists() {
                             std::fs::create_dir_all(&page_dirname).unwrap();
                             let mut page_filename = page_dirname;
                             page_filename.push("index.html");
-                            let page = create_page( block_extra.block.header.time, str);
+                            let page = create_detail_page(&date, str);
                             save_page(page_filename, page);
                         }
+                        let value = map.entry(year_month).or_insert(BTreeSet::new());
+                        value.insert(txid);
                     }
                 }
             }
@@ -50,6 +60,24 @@ fn main() -> Result<(), Error> {
     }
     handle.join().expect("couldn't join");
     info!("end");
+
+    let months: Vec<_> = map.keys().collect();
+    let index_page = create_index_page(months);
+    let mut index_file = PathBuf::new();
+    index_file.push("_site");
+    index_file.push("index.html");
+    save_page(index_file, index_page);
+
+    let mut home = PathBuf::new();
+    home.push("_site");
+    for (k, v) in map {
+        let page = create_month_page(&k, v);
+        let mut month_file = home.clone();
+        month_file.push(&k);
+        month_file.push("index.html");
+        save_page(month_file, page)
+    }
+
     Ok(())
 }
 
@@ -66,9 +94,38 @@ fn save_page(filename: PathBuf, page: String) {
     file.write(page.as_bytes()).unwrap();
 }
 
-fn create_page(time: u32, msg: &str) -> String {
-    let date = NaiveDateTime::from_timestamp(time as i64, 0);
+fn create_index_page(months: Vec<&String>) -> String {
+    let mut list = String::new();
+    for month in months {
+        list.push_str("<li><a href=\"");
+        list.push_str(&month);
+        list.push_str("\">");
+        list.push_str(&month);
+        list.push_str("</a></li>");
+    }
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul></body></html>", list)
+}
+
+fn create_month_page(month: &String, txids: BTreeSet<Txid>) -> String {
+    let mut list = String::new();
+
+    for txid in txids {
+        let txid = format!("{}", txid);
+        list.push_str("<li><a href=\"m/");
+        list.push_str(&txid);
+        list.push_str("\">");
+        list.push_str(&txid);
+        list.push_str("</a></li>");
+    }
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>{}</h1><ul>{}</ul></body></html>", month, list)
+}
+
+fn create_detail_page(date: &NaiveDateTime, msg: &str) -> String {
     format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>{} UTC</p><h1>{}</h1></body></html>", date, msg)
+}
+
+fn year_month(date: &NaiveDateTime) -> String {
+    format!("{}-{}", date.year(), date.month())
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
@@ -87,11 +144,11 @@ fn ew_str_from_op_return(script: &Script) -> Option<&str> {
 
 #[cfg(test)]
 mod test {
-    use bitcoin::consensus::deserialize;
+    use crate::{create_detail_page, create_index_page, ew_str_from_op_return};
     use bitcoin::hashes::hex::FromHex;
     use bitcoin::Script;
+    use chrono::NaiveDateTime;
     use std::str::FromStr;
-    use crate::{ew_str_from_op_return, create_page};
 
     #[test]
     fn test_parsing() {
@@ -102,8 +159,16 @@ mod test {
     }
 
     #[test]
-    fn test_page() {
-        let result = create_page(1445192722, "Atoms are made of universes");
+    fn test_page_detail() {
+        let date = NaiveDateTime::from_timestamp(1445192722 as i64, 0);
+        let result = create_detail_page(&date, "Atoms are made of universes");
         assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
+    }
+
+    #[test]
+    fn test_page_index() {
+        let months = vec!["2019-01".to_string(), "2020-02".to_string()];
+        let result = create_index_page(months);
+        assert_eq!(result, "");
     }
 }
