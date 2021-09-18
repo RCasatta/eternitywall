@@ -9,6 +9,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use structopt::StructOpt;
+use chrono::NaiveDateTime;
 
 #[derive(Debug)]
 enum Error {
@@ -39,7 +40,8 @@ fn main() -> Result<(), Error> {
                             std::fs::create_dir_all(&page_dirname).unwrap();
                             let mut page_filename = page_dirname;
                             page_filename.push("index.html");
-                            create_page(page_filename, &txid, block_extra.block.header.time, str);
+                            let page = create_page( block_extra.block.header.time, str);
+                            save_page(page_filename, page);
                         }
                     }
                 }
@@ -59,10 +61,14 @@ fn page_dirname(txid: &Txid) -> PathBuf {
     path
 }
 
-fn create_page(filename: PathBuf, txid: &Txid, time: u32, msg: &str) {
+fn save_page(filename: PathBuf, page: String) {
     let mut file = File::create(filename).unwrap();
-    let page = format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>txid: {}</p><p>timestamp: {}</p><h1>{}</h1></body></html>", txid, time, msg);
     file.write(page.as_bytes()).unwrap();
+}
+
+fn create_page(time: u32, msg: &str) -> String {
+    let date = NaiveDateTime::from_timestamp(time as i64, 0);
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>{} UTC</p><h1>{}</h1></body></html>", date, msg)
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
@@ -85,13 +91,19 @@ mod test {
     use bitcoin::hashes::hex::FromHex;
     use bitcoin::Script;
     use std::str::FromStr;
+    use crate::{ew_str_from_op_return, create_page};
 
     #[test]
     fn test_parsing() {
         // op_return script in tx 0e20ae6ed9d1de7eb84823bfb4445fc3421e489c31d7694693b2fecb7d184807
         let script = Script::from_str("6a1645574275696c64696e67207468652077616c6c2e2e2e").unwrap();
-        for ins in script.instructions() {
-            println!("{:?}", ins);
-        }
+        let result = ew_str_from_op_return(&script);
+        assert_eq!(result, Some("Building the wall..."));
+    }
+
+    #[test]
+    fn test_page() {
+        let result = create_page(1445192722, "Atoms are made of universes");
+        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
     }
 }
