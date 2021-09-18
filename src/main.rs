@@ -5,6 +5,7 @@ use blocks_iterator::Config;
 use chrono::{Datelike, NaiveDateTime};
 use env_logger::Env;
 use log::info;
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
@@ -23,11 +24,39 @@ impl From<RecvError> for Error {
     }
 }
 
+struct Message {
+    txid: Txid,
+    date: NaiveDateTime,
+    msg: String,
+}
+
+impl Ord for Message {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.date.cmp(&other.date) {
+            Ordering::Equal => self.txid.cmp(&other.txid),
+            ord => ord,
+        }
+    }
+}
+impl PartialOrd for Message {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+impl PartialEq for Message {
+    fn eq(&self, other: &Self) -> bool {
+        self.txid == other.txid && self.date == other.date
+    }
+}
+impl Eq for Message {}
+
+type MessagesByMonth = BTreeMap<String, BTreeSet<Message>>;
+
 fn main() -> Result<(), Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     info!("start");
 
-    let mut map = BTreeMap::new();
+    let mut map: MessagesByMonth = BTreeMap::new();
 
     let mut config = Config::from_args();
     config.skip_prevout = true;
@@ -51,8 +80,13 @@ fn main() -> Result<(), Error> {
                             let page = create_detail_page(&date, str);
                             save_page(page_filename, page);
                         }
+                        let message = Message {
+                            txid,
+                            date,
+                            msg: str.to_string(),
+                        };
                         let value = map.entry(year_month).or_insert(BTreeSet::new());
-                        value.insert(txid);
+                        value.insert(message);
                     }
                 }
             }
@@ -61,8 +95,7 @@ fn main() -> Result<(), Error> {
     handle.join().expect("couldn't join");
     info!("end");
 
-    let months: Vec<_> = map.keys().collect();
-    let index_page = create_index_page(months);
+    let index_page = create_index_page(&map);
     let mut index_file = PathBuf::new();
     index_file.push("_site");
     index_file.push("index.html");
@@ -97,28 +130,32 @@ fn save_page(filename: PathBuf, page: String) {
     file.write(page.as_bytes()).unwrap();
 }
 
-fn create_index_page(mut months: Vec<&String>) -> String {
+fn create_index_page(map: &MessagesByMonth) -> String {
     let mut list = String::new();
-    months.reverse();
-    for month in months {
-        list.push_str("<li><a href=\"");
+    for (month, messages) in map {
+        list.push_str("<li><a href=\"/");
         list.push_str(&month);
         list.push_str("\">");
         list.push_str(&month);
+        list.push_str(" (");
+        list.push_str(&messages.len().to_string());
+        list.push_str(")");
         list.push_str("</a></li>");
     }
     format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul></body></html>", list)
 }
 
-fn create_month_page(month: &String, txids: BTreeSet<Txid>) -> String {
+fn create_month_page(month: &String, messages: BTreeSet<Message>) -> String {
     let mut list = String::new();
 
-    for txid in txids {
-        let txid = format!("{}", txid);
-        list.push_str("<li><a href=\"m/");
+    for msg in messages {
+        let txid = format!("{}", msg.txid);
+        list.push_str("<li><a href=\"/m/");
         list.push_str(&txid);
         list.push_str("\">");
-        list.push_str(&txid);
+        list.push_str(&msg.date.to_string());
+        list.push_str(" UTC - ");
+        list.push_str(&msg.msg);
         list.push_str("</a></li>");
     }
     format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>{}</h1><ul>{}</ul></body></html>", month, list)
