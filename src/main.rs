@@ -32,7 +32,7 @@ fn main() -> Result<(), Error> {
         for tx in block_extra.block.txdata.iter() {
             for output in tx.output.iter() {
                 if output.script_pubkey.is_op_return() {
-                    if let Some(str) = str_from_op_return(&output.script_pubkey) {
+                    if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
                         let txid = tx.txid();
                         let page_dirname = page_dirname(&txid);
                         if !page_dirname.exists() {
@@ -61,16 +61,18 @@ fn page_dirname(txid: &Txid) -> PathBuf {
 
 fn create_page(filename: PathBuf, txid: &Txid, time: u32, msg: &str) {
     let mut file = File::create(filename).unwrap();
-    let page = format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>txid: {}</p><p>timestamp: {}</p><p>message: {}</p></body></html>", txid, time, msg);
+    let page = format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>txid: {}</p><p>timestamp: {}</p><h1>{}</h1></body></html>", txid, time, msg);
     file.write(page.as_bytes()).unwrap();
 }
 
-fn str_from_op_return(script: &Script) -> Option<&str> {
+fn ew_str_from_op_return(script: &Script) -> Option<&str> {
     let mut instructions = script.instructions();
     if let Some(Ok(Instruction::Op(all))) = instructions.next() {
         if all == OP_RETURN {
             if let Some(Ok(Instruction::PushBytes(bytes))) = instructions.next() {
-                return Some(std::str::from_utf8(bytes).ok()?);
+                if bytes.len() > 2 && bytes[0] == 0x45 && bytes[1] == 0x57 {
+                    return Some(std::str::from_utf8(&bytes[2..]).ok()?);
+                }
             }
         }
     }
