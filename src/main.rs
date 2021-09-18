@@ -74,6 +74,9 @@ fn main() -> Result<(), Error> {
         let page = create_month_page(&k, v);
         let mut month_file = home.clone();
         month_file.push(&k);
+        if !month_file.exists() {
+            std::fs::create_dir_all(&month_file).unwrap();
+        }
         month_file.push("index.html");
         save_page(month_file, page)
     }
@@ -94,8 +97,9 @@ fn save_page(filename: PathBuf, page: String) {
     file.write(page.as_bytes()).unwrap();
 }
 
-fn create_index_page(months: Vec<&String>) -> String {
+fn create_index_page(mut months: Vec<&String>) -> String {
     let mut list = String::new();
+    months.reverse();
     for month in months {
         list.push_str("<li><a href=\"");
         list.push_str(&month);
@@ -125,7 +129,7 @@ fn create_detail_page(date: &NaiveDateTime, msg: &str) -> String {
 }
 
 fn year_month(date: &NaiveDateTime) -> String {
-    format!("{}-{}", date.year(), date.month())
+    format!("{}-{:0>2}", date.year(), date.month())
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
