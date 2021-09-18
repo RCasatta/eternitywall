@@ -124,6 +124,7 @@ dependencies = [
 name = "eternitywall-site"
 version = "0.1.0"
 dependencies = [
+ "bitcoin",
  "blocks_iterator",
  "env_logger",
  "log",
