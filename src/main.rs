@@ -12,6 +12,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use structopt::StructOpt;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 enum Error {
@@ -28,6 +29,12 @@ struct Message {
     txid: Txid,
     date: NaiveDateTime,
     msg: String,
+}
+
+impl Message {
+    pub fn escape_msg(&self) -> Cow<str> {
+        html_escape::encode_text(&self.msg)
+    }
 }
 
 impl Ord for Message {
@@ -138,14 +145,16 @@ fn save_page(filename: PathBuf, page: String) {
 }
 
 fn create_index_page(map: &MessagesByMonth) -> String {
+    let mut years: Vec<_> = map.keys().collect();
+    years.reverse();
     let mut list = String::new();
-    for (year, messages) in map {
+    for year in years {
         list.push_str("<li><a href=\"/");
         list.push_str(&year.to_string());
         list.push_str("\">");
         list.push_str(&year.to_string());
         list.push_str(" (");
-        list.push_str(&messages.len().to_string());
+        list.push_str(&map.get(year).unwrap().len().to_string());
         list.push_str(")");
         list.push_str("</a></li>");
     }
@@ -168,14 +177,14 @@ fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
         list.push_str("\">");
         list.push_str(&msg.date.to_string());
         list.push_str("</a> - ");
-        list.push_str(&msg.msg);
+        list.push_str(&msg.escape_msg());
         list.push_str("</li>");
     }
     format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><h2>{}</h2><ul>{}</ul></body></html>", year, list)
 }
 
 fn create_detail_page(msg: &Message) -> String {
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.msg)
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.escape_msg())
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
