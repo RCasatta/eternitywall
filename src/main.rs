@@ -164,7 +164,7 @@ fn create_index_page(map: &MessagesByMonth) -> String {
 }
 
 fn create_about() -> String {
-    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>EternityWall shows message in the Bitcoin blockchain.</p><p>A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\".</p><p>All dates are referred to the block timestamp containing the transaction and are in UTC.</p></body></html>".to_string()
+    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>EternityWall shows message in the Bitcoin blockchain.</p><p>A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\".</p><p>All dates are referred to the block timestamp containing the transaction and are in UTC.</p><p>How to <a href=\"https://blog.eternitywall.com/2016/06/01/how-to-write-a-message-on-the-blockchain/\">write a message</a> with Bitcoin Core</p></body></html>".to_string()
 }
 
 fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
