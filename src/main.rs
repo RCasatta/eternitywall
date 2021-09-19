@@ -32,7 +32,7 @@ struct Message {
 
 impl Ord for Message {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.date.cmp(&other.date) {
+        match other.date.cmp(&self.date) {
             Ordering::Equal => self.txid.cmp(&other.txid),
             ord => ord,
         }
@@ -174,7 +174,7 @@ fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
 }
 
 fn create_detail_page(msg: &Message) -> String {
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.msg)
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.msg)
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
