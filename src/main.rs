@@ -2,7 +2,7 @@ use bitcoin::blockdata::opcodes::all::OP_RETURN;
 use bitcoin::blockdata::script::Instruction;
 use bitcoin::{Script, Txid};
 use blocks_iterator::Config;
-use chrono::{Datelike, NaiveDateTime};
+use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
 use log::info;
 use std::cmp::Ordering;
@@ -50,7 +50,7 @@ impl PartialEq for Message {
 }
 impl Eq for Message {}
 
-type MessagesByMonth = BTreeMap<String, BTreeSet<Message>>;
+type MessagesByMonth = BTreeMap<i32, BTreeSet<Message>>;
 
 fn main() -> Result<(), Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -71,21 +71,22 @@ fn main() -> Result<(), Error> {
                         let page_dirname = page_dirname(&txid);
                         let date =
                             NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
-                        let year_month = year_month(&date);
 
-                        if !page_dirname.exists() {
-                            std::fs::create_dir_all(&page_dirname).unwrap();
-                            let mut page_filename = page_dirname;
-                            page_filename.push("index.html");
-                            let page = create_detail_page(&date, str);
-                            save_page(page_filename, page);
-                        }
                         let message = Message {
                             txid,
                             date,
                             msg: str.to_string(),
                         };
-                        let value = map.entry(year_month).or_insert(BTreeSet::new());
+
+                        if !page_dirname.exists() {
+                            std::fs::create_dir_all(&page_dirname).unwrap();
+                            let mut page_filename = page_dirname;
+                            page_filename.push("index.html");
+                            let page = create_detail_page(&message);
+                            save_page(page_filename, page);
+                        }
+
+                        let value = map.entry(date.year()).or_insert(BTreeSet::new());
                         value.insert(message);
                     }
                 }
@@ -104,15 +105,20 @@ fn main() -> Result<(), Error> {
     let mut home = PathBuf::new();
     home.push("_site");
     for (k, v) in map {
-        let page = create_month_page(&k, v);
+        let page = create_year_page(k, v);
         let mut month_file = home.clone();
-        month_file.push(&k);
+        month_file.push(&k.to_string());
         if !month_file.exists() {
             std::fs::create_dir_all(&month_file).unwrap();
         }
         month_file.push("index.html");
         save_page(month_file, page)
     }
+
+    let mut about = home.clone();
+    about.push("about");
+    about.push("index.html");
+    save_page(about, create_about());
 
     Ok(())
 }
@@ -132,20 +138,26 @@ fn save_page(filename: PathBuf, page: String) {
 
 fn create_index_page(map: &MessagesByMonth) -> String {
     let mut list = String::new();
-    for (month, messages) in map {
+    for (year, messages) in map {
         list.push_str("<li><a href=\"/");
-        list.push_str(&month);
+        list.push_str(&year.to_string());
         list.push_str("\">");
-        list.push_str(&month);
+        list.push_str(&year.to_string());
         list.push_str(" (");
         list.push_str(&messages.len().to_string());
         list.push_str(")");
         list.push_str("</a></li>");
     }
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul></body></html>", list)
+    let now = Utc::now().naive_utc();
+
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul><p><a href=\"/about\">About</a></p><p>Created {}</p></body></html>", list, now)
 }
 
-fn create_month_page(month: &String, messages: BTreeSet<Message>) -> String {
+fn create_about() -> String {
+    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><p>EternityWall shows message in the Bitcoin blockchain. A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\". All dates are UTC.</p></body></html>".to_string()
+}
+
+fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
     let mut list = String::new();
 
     for msg in messages {
@@ -154,19 +166,15 @@ fn create_month_page(month: &String, messages: BTreeSet<Message>) -> String {
         list.push_str(&txid);
         list.push_str("\">");
         list.push_str(&msg.date.to_string());
-        list.push_str(" UTC - ");
+        list.push_str("</a> - ");
         list.push_str(&msg.msg);
-        list.push_str("</a></li>");
+        list.push_str("</li>");
     }
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>{}</h1><ul>{}</ul></body></html>", month, list)
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">Eternity Wall</a></h1><h2>{}</h2><ul>{}</ul></body></html>", year, list)
 }
 
-fn create_detail_page(date: &NaiveDateTime, msg: &str) -> String {
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>{} UTC</p><h1>{}</h1></body></html>", date, msg)
-}
-
-fn year_month(date: &NaiveDateTime) -> String {
-    format!("{}-{:0>2}", date.year(), date.month())
+fn create_detail_page(msg: &Message) -> String {
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.msg)
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
@@ -185,11 +193,11 @@ fn ew_str_from_op_return(script: &Script) -> Option<&str> {
 
 #[cfg(test)]
 mod test {
-    use crate::{create_detail_page, create_index_page, ew_str_from_op_return};
-    use bitcoin::hashes::hex::FromHex;
-    use bitcoin::Script;
+    use crate::{create_detail_page, create_index_page, ew_str_from_op_return, MessagesByMonth, Message};
+    use bitcoin::{Script, Txid};
     use chrono::NaiveDateTime;
     use std::str::FromStr;
+    use std::collections::BTreeSet;
 
     #[test]
     fn test_parsing() {
@@ -202,14 +210,22 @@ mod test {
     #[test]
     fn test_page_detail() {
         let date = NaiveDateTime::from_timestamp(1445192722 as i64, 0);
-        let result = create_detail_page(&date, "Atoms are made of universes");
+        let msg = Message {
+            msg: "Atoms are made of universes".to_string(),
+            date,
+            txid: Txid::default(),
+        };
+        let result = create_detail_page(&msg);
         assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
     }
 
     #[test]
     fn test_page_index() {
-        let months = vec!["2019-01".to_string(), "2020-02".to_string()];
-        let result = create_index_page(months);
-        assert_eq!(result, "");
+        let mut map = MessagesByMonth::new();
+        map.insert("2019-01".to_string(), BTreeSet::new());
+        map.insert("2019-02".to_string(), BTreeSet::new());
+
+        let result = create_index_page(&map);
+        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul><li><a href=\"/2019-01\">2019-01 (0)</a></li><li><a href=\"/2019-02\">2019-02 (0)</a></li></ul></body></html>");
     }
 }
