@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use structopt::StructOpt;
 use std::borrow::Cow;
+use chrono::format::StrftimeItems;
 
 #[derive(Debug)]
 enum Error {
@@ -158,13 +159,12 @@ fn create_index_page(map: &MessagesByMonth) -> String {
         list.push_str(")");
         list.push_str("</a></li>");
     }
-    let now = Utc::now().naive_utc();
 
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul><p><a href=\"/about\">About</a></p><p>Created {}</p></body></html>", list, now)
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul><p><a href=\"/about\">About</a></p><p>Created {}</p></body></html>", list, now())
 }
 
 fn create_about() -> String {
-    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>EternityWall shows message in the Bitcoin blockchain. A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\". All dates are referred to the block timestamp containing the transaction and are in UTC.</p></body></html>".to_string()
+    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>EternityWall shows message in the Bitcoin blockchain.</p><p>A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\".</p><p>All dates are referred to the block timestamp containing the transaction and are in UTC.</p></body></html>".to_string()
 }
 
 fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
@@ -180,11 +180,11 @@ fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
         list.push_str(&msg.escape_msg());
         list.push_str("</li>");
     }
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><h2>{}</h2><ul>{}</ul></body></html>", year, list)
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><h1><a href=\"/\">EternityWall</a></h1><h2>{}</h2><ul>{}</ul></body></html>", year, list)
 }
 
 fn create_detail_page(msg: &Message) -> String {
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.escape_msg())
+    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><h1><a href=\"/\">EternityWall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.escape_msg())
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
@@ -201,13 +201,20 @@ fn ew_str_from_op_return(script: &Script) -> Option<&str> {
     None
 }
 
+fn now() -> String {
+    let now = Utc::now().naive_utc();
+    let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
+    format!("{}", now.format_with_items(fmt))
+}
+
 #[cfg(test)]
 mod test {
     use crate::{create_detail_page, create_index_page, ew_str_from_op_return, MessagesByMonth, Message};
     use bitcoin::{Script, Txid};
-    use chrono::NaiveDateTime;
+    use chrono::{NaiveDateTime, Utc};
     use std::str::FromStr;
     use std::collections::BTreeSet;
+    use chrono::format::StrftimeItems;
 
     #[test]
     fn test_parsing() {
@@ -226,16 +233,17 @@ mod test {
             txid: Txid::default(),
         };
         let result = create_detail_page(&msg);
-        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
+        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
     }
 
     #[test]
     fn test_page_index() {
         let mut map = MessagesByMonth::new();
-        map.insert("2019-01".to_string(), BTreeSet::new());
-        map.insert("2019-02".to_string(), BTreeSet::new());
+        map.insert(2019, BTreeSet::new());
+        map.insert(2020, BTreeSet::new());
 
         let result = create_index_page(&map);
         assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul><li><a href=\"/2019-01\">2019-01 (0)</a></li><li><a href=\"/2019-02\">2019-02 (0)</a></li></ul></body></html>");
     }
+
 }
