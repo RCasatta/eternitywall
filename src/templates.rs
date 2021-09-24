@@ -29,7 +29,7 @@ fn footer() -> Markup {
 pub fn page(content: Markup) -> Markup {
     html! {
         (DOCTYPE)
-        html {
+        html lang = "en" {
             (header())
             body {
                 h1 { a href="/" { "EternityWall" } }
@@ -93,7 +93,7 @@ pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
 pub fn create_detail_page(msg: &Message) -> String {
     let content = html! {
         h2 { (msg.date.to_string()) " UTC" }
-        h1 { (msg.escape_msg()) }
+        h1 { span lang=(msg.lang()) { (msg.escape_msg()) }  }
     };
 
     page(content).into_string()
@@ -146,6 +146,12 @@ mod test {
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
+    #[test]
+    fn test_lang() {
+        assert_eq!(get_message().lang(), "en");
+        assert_eq!(get_another_message().lang(), "it");
+    }
+
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
         let base64 = base64::encode(input.as_ref());
         format!("data:{};base64,{}", content_type, base64)
@@ -160,7 +166,7 @@ mod test {
     }
     fn get_another_message() -> Message {
         Message {
-            msg: "Hello Again".to_string(),
+            msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
             date: NaiveDateTime::from_timestamp(1445194722 as i64, 0),
             txid: Txid::default(),
         }

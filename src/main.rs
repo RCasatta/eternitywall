@@ -17,6 +17,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use templates::{create_about, create_detail_page, create_index_page, create_year_page};
+use whatlang::detect_lang;
+use isolang::Language;
 
 #[derive(Debug)]
 enum Error {
@@ -41,6 +43,14 @@ impl Message {
     }
     pub fn link(&self) -> String {
         format!("/m/{}", self.txid)
+    }
+    pub fn lang(&self) -> &str {
+        if let Some(l) = detect_lang(&self.msg) {
+            if let Some(l) = Language::from_639_3(l.code()) {
+                return l.to_639_1().unwrap_or("en");
+            }
+        }
+        "en"
     }
 }
 
