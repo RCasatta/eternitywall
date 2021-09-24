@@ -1,19 +1,22 @@
+mod templates;
+
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
+use blocks_iterator::log::info;
+use blocks_iterator::structopt::StructOpt;
 use blocks_iterator::Config;
+use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
-use blocks_iterator::log::info;
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
-use blocks_iterator::structopt::StructOpt;
-use std::borrow::Cow;
-use chrono::format::StrftimeItems;
+use templates::{create_about, create_detail_page, create_index_page, create_year_page};
 
 #[derive(Debug)]
 enum Error {
@@ -26,7 +29,7 @@ impl From<RecvError> for Error {
     }
 }
 
-struct Message {
+pub struct Message {
     txid: Txid,
     date: NaiveDateTime,
     msg: String,
@@ -35,6 +38,9 @@ struct Message {
 impl Message {
     pub fn escape_msg(&self) -> Cow<str> {
         html_escape::encode_text(&self.msg)
+    }
+    pub fn link(&self) -> String {
+        format!("/m/{}", self.txid)
     }
 }
 
@@ -145,48 +151,6 @@ fn save_page(filename: PathBuf, page: String) {
     file.write(page.as_bytes()).unwrap();
 }
 
-fn create_index_page(map: &MessagesByMonth) -> String {
-    let mut years: Vec<_> = map.keys().collect();
-    years.reverse();
-    let mut list = String::new();
-    for year in years {
-        list.push_str("<li><a href=\"/");
-        list.push_str(&year.to_string());
-        list.push_str("\">");
-        list.push_str(&year.to_string());
-        list.push_str(" (");
-        list.push_str(&map.get(year).unwrap().len().to_string());
-        list.push_str(")");
-        list.push_str("</a></li>");
-    }
-
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul>{}</ul><p><a href=\"/about\">About</a></p><p>Created {}</p></body></html>", list, now())
-}
-
-fn create_about() -> String {
-    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1><a href=\"/\">EternityWall</a></h1><p>EternityWall shows message in the Bitcoin blockchain.</p><p>A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\".</p><p>All dates are referred to the block timestamp containing the transaction and are in UTC.</p><p>How to <a href=\"https://blog.eternitywall.com/2016/06/01/how-to-write-a-message-on-the-blockchain/\">write a message</a> with Bitcoin Core</p></body></html>".to_string()
-}
-
-fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
-    let mut list = String::new();
-
-    for msg in messages {
-        let txid = format!("{}", msg.txid);
-        list.push_str("<li><a href=\"/m/");
-        list.push_str(&txid);
-        list.push_str("\">");
-        list.push_str(&msg.date.to_string());
-        list.push_str("</a> - ");
-        list.push_str(&msg.escape_msg());
-        list.push_str("</li>");
-    }
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><h1><a href=\"/\">EternityWall</a></h1><h2>{}</h2><ul>{}</ul></body></html>", year, list)
-}
-
-fn create_detail_page(msg: &Message) -> String {
-    format!("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><h1><a href=\"/\">EternityWall</a></h1><p>{} UTC</p><h1>{}</h1></body></html>", msg.date, msg.escape_msg())
-}
-
 fn ew_str_from_op_return(script: &Script) -> Option<&str> {
     let mut instructions = script.instructions();
     if let Some(Ok(Instruction::Op(all))) = instructions.next() {
@@ -209,12 +173,9 @@ fn now() -> String {
 
 #[cfg(test)]
 mod test {
-    use crate::{create_detail_page, create_index_page, ew_str_from_op_return, MessagesByMonth, Message};
-    use bitcoin::{Script, Txid};
-    use chrono::{NaiveDateTime, Utc};
+    use crate::ew_str_from_op_return;
+    use blocks_iterator::bitcoin::Script;
     use std::str::FromStr;
-    use std::collections::BTreeSet;
-    use chrono::format::StrftimeItems;
 
     #[test]
     fn test_parsing() {
@@ -223,27 +184,4 @@ mod test {
         let result = ew_str_from_op_return(&script);
         assert_eq!(result, Some("Building the wall..."));
     }
-
-    #[test]
-    fn test_page_detail() {
-        let date = NaiveDateTime::from_timestamp(1445192722 as i64, 0);
-        let msg = Message {
-            msg: "Atoms are made of universes".to_string(),
-            date,
-            txid: Txid::default(),
-        };
-        let result = create_detail_page(&msg);
-        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"word-break: break-word;\"><p>2015-10-18 18:25:22 UTC</p><h1>Atoms are made of universes</h1></body></html>");
-    }
-
-    #[test]
-    fn test_page_index() {
-        let mut map = MessagesByMonth::new();
-        map.insert(2019, BTreeSet::new());
-        map.insert(2020, BTreeSet::new());
-
-        let result = create_index_page(&map);
-        assert_eq!(result, "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body><h1>EternityWall</h1><ul><li><a href=\"/2019-01\">2019-01 (0)</a></li><li><a href=\"/2019-02\">2019-02 (0)</a></li></ul></body></html>");
-    }
-
 }

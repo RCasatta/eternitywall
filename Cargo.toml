@@ -10,3 +10,7 @@ blocks_iterator = "0.4.0"
 env_logger = "0.9"
 chrono = "0.4.19"
 html-escape = "0.2.9"
+maud = "0.22.2"
+
+[dev-dependencies]
+base64 = "0.13.0"
