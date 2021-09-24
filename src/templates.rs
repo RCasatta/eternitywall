@@ -5,7 +5,6 @@ use std::collections::BTreeSet;
 /// A basic header with a dynamic `page_title`.
 fn header() -> Markup {
     html! {
-        (DOCTYPE)
         head {
             meta charset="utf-8";
             title { "EternityWall" }
@@ -16,7 +15,6 @@ fn header() -> Markup {
 /// A static footer.
 fn footer() -> Markup {
     html! {
-
         footer {
             a href="/about" { "About" }
             p { "Page created " (now()) }
@@ -30,12 +28,15 @@ fn footer() -> Markup {
 /// Additionally takes a `greeting_box` that's `Markup`, not `&str`.
 pub fn page(content: Markup) -> Markup {
     html! {
-        (header())
-        body {
-            h1 { a href="/" { "EternityWall" } }
-            (content)
+        (DOCTYPE)
+        html {
+            (header())
+            body {
+                h1 { a href="/" { "EternityWall" } }
+                (content)
+                (footer())
+            }
         }
-        (footer())
     }
 }
 
@@ -122,6 +123,7 @@ mod test {
     fn test_page_detail() {
         let msg = get_message();
         let page = create_detail_page(&msg);
+        assert_eq!("", page);
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
