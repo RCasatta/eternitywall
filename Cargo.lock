@@ -45,9 +45,9 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bitcoin"
-version = "0.27.0"
+version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a427b27dae305157520d86673f2393b3eb08d880609abfcffc6e3c3c820e764"
+checksum = "9a41df6ad9642c5c15ae312dd3d074de38fd3eb7cc87ad4ce10f90292a83fe4d"
 dependencies = [
  "bech32",
  "bitcoin_hashes",
@@ -68,12 +68,11 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blocks_iterator"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42be8b2c882ab196a2818455fca35af7313c07e01015a7c4d6bceba6eafa5cc8"
+checksum = "af78afe8c81dd36a46d7caa73cb6e7ebebb999ea490d2b7ffde916a78d51244a"
 dependencies = [
  "bitcoin",
- "env_logger",
  "fxhash",
  "glob",
  "log",
@@ -143,13 +142,10 @@ dependencies = [
 name = "eternitywall-site"
 version = "0.1.0"
 dependencies = [
- "bitcoin",
  "blocks_iterator",
  "chrono",
  "env_logger",
  "html-escape",
- "log",
- "structopt",
 ]
 
 [[package]]
@@ -355,9 +351,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.76"
+version = "1.0.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6f107db402c2c2055242dbf4d2af0e69197202e9faacbef9571bbe47f5a1b84"
+checksum = "5239bc68e0fef57495900cfea4e8dc75596d9a319d7e16b1e0a440d24e6fe0a0"
 dependencies = [
  "proc-macro2",
  "quote",

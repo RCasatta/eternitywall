@@ -1,17 +1,17 @@
-use bitcoin::blockdata::opcodes::all::OP_RETURN;
-use bitcoin::blockdata::script::Instruction;
-use bitcoin::{Script, Txid};
+use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
+use blocks_iterator::bitcoin::blockdata::script::Instruction;
+use blocks_iterator::bitcoin::{Script, Txid};
 use blocks_iterator::Config;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
-use log::info;
+use blocks_iterator::log::info;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
-use structopt::StructOpt;
+use blocks_iterator::structopt::StructOpt;
 use std::borrow::Cow;
 use chrono::format::StrftimeItems;
 
