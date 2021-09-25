@@ -1,4 +1,5 @@
-use crate::{now, Message, MessagesByMonth};
+use crate::{now, MessagesByMonth};
+use crate::message::Message;
 use maud::{html, Markup, DOCTYPE};
 use std::collections::BTreeSet;
 
@@ -79,9 +80,9 @@ pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
         ul {
             @for msg in &messages {
                 li {
-                    a href=(msg.link()) { (msg.date.to_string()) }
+                    a href=(msg.link()) { (msg.date()) }
                     " - "
-                    (msg.escape_msg())
+                    span lang=(msg.lang()) { (msg.escape_msg()) }
                 }
             }
         }
@@ -92,7 +93,7 @@ pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
 
 pub fn create_detail_page(msg: &Message) -> String {
     let content = html! {
-        h2 { (msg.date.to_string()) " UTC" }
+        h2 { (msg.date()) " UTC" }
         h1 { span lang=(msg.lang()) { (msg.escape_msg()) }  }
     };
 

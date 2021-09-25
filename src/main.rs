@@ -1,4 +1,5 @@
 mod templates;
+mod message;
 
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
@@ -9,16 +10,12 @@ use blocks_iterator::Config;
 use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
-use std::borrow::Cow;
-use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use templates::{create_about, create_detail_page, create_index_page, create_year_page};
-use whatlang::detect_lang;
-use isolang::Language;
 
 #[derive(Debug)]
 enum Error {
@@ -31,50 +28,17 @@ impl From<RecvError> for Error {
     }
 }
 
-pub struct Message {
-    txid: Txid,
-    date: NaiveDateTime,
-    msg: String,
+#[derive(StructOpt, Debug, Clone)]
+struct Params {
+    #[structopt(flatten)]
+    config: Config,
+
+    /// Overwrite generated html files instead of skipping if they exists
+    #[structopt(short, long)]
+    pub overwrite: bool,
 }
 
-impl Message {
-    pub fn escape_msg(&self) -> Cow<str> {
-        html_escape::encode_text(&self.msg)
-    }
-    pub fn link(&self) -> String {
-        format!("/m/{}", self.txid)
-    }
-    pub fn lang(&self) -> &str {
-        if let Some(l) = detect_lang(&self.msg) {
-            if let Some(l) = Language::from_639_3(l.code()) {
-                return l.to_639_1().unwrap_or("en");
-            }
-        }
-        "en"
-    }
-}
-
-impl Ord for Message {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match other.date.cmp(&self.date) {
-            Ordering::Equal => self.txid.cmp(&other.txid),
-            ord => ord,
-        }
-    }
-}
-impl PartialOrd for Message {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-impl PartialEq for Message {
-    fn eq(&self, other: &Self) -> bool {
-        self.txid == other.txid && self.date == other.date
-    }
-}
-impl Eq for Message {}
-
-type MessagesByMonth = BTreeMap<i32, BTreeSet<Message>>;
+type MessagesByMonth = BTreeMap<i32, BTreeSet<message::Message>>;
 
 fn main() -> Result<(), Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -82,10 +46,10 @@ fn main() -> Result<(), Error> {
 
     let mut map: MessagesByMonth = BTreeMap::new();
 
-    let mut config = Config::from_args();
-    config.skip_prevout = true;
+    let mut params = Params::from_args();
+    params.config.skip_prevout = true;
     let (send, recv) = sync_channel(100);
-    let handle = blocks_iterator::iterate(config, send);
+    let handle = blocks_iterator::iterate(params.config.clone(), send);
     while let Some(block_extra) = recv.recv()? {
         for tx in block_extra.block.txdata.iter() {
             for output in tx.output.iter() {
@@ -96,13 +60,13 @@ fn main() -> Result<(), Error> {
                         let date =
                             NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
 
-                        let message = Message {
+                        let message = message::Message {
                             txid,
                             date,
                             msg: str.to_string(),
                         };
 
-                        if !page_dirname.exists() {
+                        if !page_dirname.exists() || params.overwrite {
                             std::fs::create_dir_all(&page_dirname).unwrap();
                             let mut page_filename = page_dirname;
                             page_filename.push("index.html");

@@ -13,6 +13,7 @@ html-escape = "0.2.9"
 maud = "0.22.2"
 whatlang = "0.12.0"
 isolang = "1.0.0"
+structopt = "0.3.21" # cannot use re-exported cause I need macros
 
 [dev-dependencies]
 base64 = "0.13.0"
