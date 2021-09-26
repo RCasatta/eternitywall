@@ -1,7 +1,6 @@
 use blocks_iterator::bitcoin::Txid;
 use chrono::NaiveDateTime;
-use std::borrow::Cow;
-use whatlang::{detect_lang, Lang};
+use whatlang::{detect, Lang};
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
@@ -12,10 +11,6 @@ pub struct Message {
 }
 
 impl Message {
-
-    pub fn escape_msg(&self) -> Cow<str> {
-        html_escape::encode_text(&self.msg)
-    }
 
     pub fn link(&self) -> String {
         format!("/m/{}", self.txid)
@@ -79,7 +74,7 @@ impl Message {
     }
 
     pub fn detect_lang(&self) -> Option<Lang> {
-        detect_lang(&self.msg)
+        detect(&self.msg).filter(|i| i.confidence() > 0.3 ).map(|i| i.lang())
     }
 
     pub fn date(&self) -> String {
@@ -106,3 +101,36 @@ impl PartialEq for Message {
     }
 }
 impl Eq for Message {}
+
+
+#[cfg(test)]
+pub mod test {
+    use super::Message;
+    use chrono::NaiveDateTime;
+    use blocks_iterator::bitcoin::Txid;
+    use whatlang::{detect};
+
+
+    #[test]
+    fn test_detect() {
+
+        let detected = detect("Non lungo che tocchi, non largo che otturi, ma duro che duri.").unwrap();
+        println!("{:?}", detected);
+
+    }
+
+    pub fn get_message() -> Message {
+        Message {
+            msg: "Atoms are made of universes".to_string(),
+            date: NaiveDateTime::from_timestamp(1445192722 as i64, 0),
+            txid: Txid::default(),
+        }
+    }
+    pub fn get_another_message() -> Message {
+        Message {
+            msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
+            date: NaiveDateTime::from_timestamp(1445194722 as i64, 0),
+            txid: Txid::default(),
+        }
+    }
+}

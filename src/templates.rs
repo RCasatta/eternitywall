@@ -87,13 +87,13 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
                     li {
                         a href=(msg.link()) { (msg.date()) }
                         " - "
-                        span lang=(lang) { (msg.escape_msg()) }
+                        span lang=(lang) { (msg.msg) }
                     }
                 } @else {
                     li {
                         a href=(msg.link()) { (msg.date()) }
                         " - "
-                        { (msg.escape_msg()) }
+                        { (msg.msg) }
                     }
                 }
 
@@ -108,9 +108,9 @@ pub fn create_detail_page(msg: &Message) -> String {
     let content = html! {
         h2 { (msg.date()) " UTC" }
         @if let Some(lang) = msg.lang() {
-            h1 { span lang=(lang) { (msg.escape_msg()) }  }
+            h1 { span lang=(lang) { (msg.msg) }  }
         } @else {
-            h1 { (msg.escape_msg()) }
+            h1 { (msg.msg) }
         }
 
     };
@@ -125,19 +125,23 @@ fn link_cat(cat: &str) -> String {
 #[cfg(test)]
 mod test {
     use crate::templates::{create_detail_page, create_index_page, create_list_page, page};
-    use crate::{MessagesByMonth};
-    use crate::message::Message;
-    use blocks_iterator::bitcoin::Txid;
-    use chrono::NaiveDateTime;
+    use crate::{MessagesByCat};
     use maud::html;
     use std::collections::BTreeSet;
     use whatlang::detect_lang;
+    use crate::message::test::{get_message, get_another_message};
 
     #[test]
     fn test_page() {
         let content = html! { p { "Hello" } };
         let page = page(content).into_string();
         assert_eq!("", to_data_url(&page, "text/html"));
+    }
+
+    #[test]
+    fn test_escape() {
+        let a = html!{ p { "<>" } };
+        assert_eq!(a.into_string(),"<p>&lt;&gt;</p>");
     }
 
     #[test]
@@ -150,11 +154,11 @@ mod test {
 
     #[test]
     fn test_page_index() {
-        let mut map = MessagesByMonth::new();
-        map.insert(2019, BTreeSet::new());
-        map.insert(2020, BTreeSet::new());
+        let mut map = MessagesByCat::new();
+        map.insert("2019".to_string(), BTreeSet::new());
+        map.insert("2020".to_string(), BTreeSet::new());
 
-        let page = create_index_page(&map);
+        let page = create_index_page(&map, true);
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
@@ -163,21 +167,16 @@ mod test {
         let mut set = BTreeSet::new();
         set.insert(get_message());
         set.insert(get_another_message());
-        let page = create_list_page(2020, set);
+        let page = create_list_page("2020", set);
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
     #[test]
     fn test_lang() {
-        assert_eq!(get_message().lang(), "en");
-        assert_eq!(get_another_message().lang(), "it");
+        assert_eq!(get_message().lang(), Some("en"));
+        assert_eq!(get_another_message().lang(), Some("it"));
         let text = "洪沛东谢家霖自习课经常说话，纪律委员金涵笑大怒";
         println!("{:?}", detect_lang(text));
-
-        let two = isolang::Language::from_639_3("cmn").unwrap().to_639_1();
-        println!("{:?}", two);
-
-
     }
 
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
@@ -185,18 +184,4 @@ mod test {
         format!("data:{};base64,{}", content_type, base64)
     }
 
-    fn get_message() -> Message {
-        Message {
-            msg: "Atoms are made of universes".to_string(),
-            date: NaiveDateTime::from_timestamp(1445192722 as i64, 0),
-            txid: Txid::default(),
-        }
-    }
-    fn get_another_message() -> Message {
-        Message {
-            msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
-            date: NaiveDateTime::from_timestamp(1445194722 as i64, 0),
-            txid: Txid::default(),
-        }
-    }
 }
