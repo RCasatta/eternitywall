@@ -1,4 +1,4 @@
-use crate::{now, MessagesByMonth};
+use crate::{now, MessagesByCat};
 use crate::message::Message;
 use maud::{html, Markup, DOCTYPE};
 use std::collections::BTreeSet;
@@ -43,16 +43,18 @@ pub fn page(content: Markup) -> Markup {
     }
 }
 
-pub fn create_index_page(map: &MessagesByMonth) -> String {
-    let mut years: Vec<_> = map.keys().collect();
-    years.reverse();
+pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
+    let mut cats: Vec<_> = map.keys().collect();
+    if reverse {
+        cats.reverse();
+    }
     let list = html! {
         ul {
-            @for year in &years {
+            @for cat in cats {
                 li {
-                    a href=(link_year(year)) { (year) }
+                    a href=(link_cat(cat)) { (cat) }
                     " ("
-                    (map.get(year).unwrap().len().to_string())
+                    (map.get(cat).unwrap().len().to_string())
                     ")"
                 }
             }
@@ -76,9 +78,9 @@ pub fn create_about() -> String {
     page(content).into_string()
 }
 
-pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
+pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
     let list = html! {
-        h2 { (year) }
+        h2 { (title) }
         ul {
             @for msg in &messages {
                 @if let Some(lang) = msg.lang() {
@@ -116,13 +118,13 @@ pub fn create_detail_page(msg: &Message) -> String {
     page(content).into_string()
 }
 
-fn link_year(year: &i32) -> String {
-    format!("/{}", year)
+fn link_cat(cat: &str) -> String {
+    format!("/{}", cat)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::templates::{create_detail_page, create_index_page, create_year_page, page};
+    use crate::templates::{create_detail_page, create_index_page, create_list_page, page};
     use crate::{MessagesByMonth};
     use crate::message::Message;
     use blocks_iterator::bitcoin::Txid;
@@ -161,7 +163,7 @@ mod test {
         let mut set = BTreeSet::new();
         set.insert(get_message());
         set.insert(get_another_message());
-        let page = create_year_page(2020, set);
+        let page = create_list_page(2020, set);
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 

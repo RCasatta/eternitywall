@@ -10,12 +10,12 @@ use blocks_iterator::Config;
 use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
-use templates::{create_about, create_detail_page, create_index_page, create_year_page};
+use templates::{create_about, create_detail_page, create_index_page, create_list_page};
 
 #[derive(Debug)]
 enum Error {
@@ -38,14 +38,14 @@ struct Params {
     pub overwrite: bool,
 }
 
-type MessagesByMonth = BTreeMap<i32, BTreeSet<message::Message>>;
+type MessagesByCat = BTreeMap<String, BTreeSet<message::Message>>;
 
 fn main() -> Result<(), Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     info!("start");
 
-    let mut map: MessagesByMonth = BTreeMap::new();
-    let mut lang_set = HashMap::new();
+    let mut years_map: MessagesByCat = BTreeMap::new();
+    let mut lang_map: MessagesByCat = BTreeMap::new();
 
     let mut params = Params::from_args();
     params.config.skip_prevout = true;
@@ -67,7 +67,7 @@ fn main() -> Result<(), Error> {
                             msg: str.to_string(),
                         };
                         if let Some(l) = message.detect_lang() {
-                            lang_set.entry(l).or_insert(BTreeSet::new()).insert(message.clone());
+                            lang_map.entry(l.eng_name().to_string()).or_insert(BTreeSet::new()).insert(message.clone());
                         }
 
                         if !page_dirname.exists() || params.overwrite {
@@ -78,7 +78,7 @@ fn main() -> Result<(), Error> {
                             save_page(page_filename, page);
                         }
 
-                        let value = map.entry(date.year()).or_insert(BTreeSet::new());
+                        let value = years_map.entry(date.year().to_string()).or_insert(BTreeSet::new());
                         value.insert(message);
                     }
                 }
@@ -87,20 +87,26 @@ fn main() -> Result<(), Error> {
     }
     handle.join().expect("couldn't join");
     info!("end");
-    lang_set.iter().for_each(|(k,v)| {
+    lang_map.iter().for_each(|(k,v)| {
         info!("{}: {}", k, v.len());
     });
 
-    let index_page = create_index_page(&map);
-    let mut index_file = PathBuf::new();
-    index_file.push("_site");
+    let mut home = PathBuf::new();
+    home.push("_site");
+
+    let index_page = create_index_page(&years_map, true);
+    let mut index_file = home.clone();
     index_file.push("index.html");
     save_page(index_file, index_page);
 
-    let mut home = PathBuf::new();
-    home.push("_site");
-    for (k, v) in map {
-        let page = create_year_page(k, v);
+    let lang_index_page = create_index_page(&lang_map, false);
+    let mut lang_index_file = home.clone();
+    lang_index_file.push("language");
+    lang_index_file.push("index.html");
+    save_page(lang_index_file, lang_index_page);
+
+    for (k, v) in years_map {
+        let page = create_list_page(&k.to_string(), v);
         let mut month_file = home.clone();
         month_file.push(&k.to_string());
         if !month_file.exists() {
@@ -108,6 +114,17 @@ fn main() -> Result<(), Error> {
         }
         month_file.push("index.html");
         save_page(month_file, page)
+    }
+
+    for (lang_string, v) in lang_map {
+        let page = create_list_page(&lang_string, v);
+        let mut lang_file = home.clone();
+        lang_file.push(&lang_string);
+        if !lang_file.exists() {
+            std::fs::create_dir_all(&lang_file).unwrap();
+        }
+        lang_file.push("index.html");
+        save_page(lang_file, page)
     }
 
     let mut about = home.clone();
