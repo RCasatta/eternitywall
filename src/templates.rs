@@ -81,11 +81,20 @@ pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
         h2 { (year) }
         ul {
             @for msg in &messages {
-                li {
-                    a href=(msg.link()) { (msg.date()) }
-                    " - "
-                    span lang=(msg.lang()) { (msg.escape_msg()) }
+                @if let Some(lang) = msg.lang() {
+                    li {
+                        a href=(msg.link()) { (msg.date()) }
+                        " - "
+                        span lang=(lang) { (msg.escape_msg()) }
+                    }
+                } @else {
+                    li {
+                        a href=(msg.link()) { (msg.date()) }
+                        " - "
+                        { (msg.escape_msg()) }
+                    }
                 }
+
             }
         }
     };
@@ -96,7 +105,12 @@ pub fn create_year_page(year: i32, messages: BTreeSet<Message>) -> String {
 pub fn create_detail_page(msg: &Message) -> String {
     let content = html! {
         h2 { (msg.date()) " UTC" }
-        h1 { span lang=(msg.lang()) { (msg.escape_msg()) }  }
+        @if let Some(lang) = msg.lang() {
+            h1 { span lang=(lang) { (msg.escape_msg()) }  }
+        } @else {
+            h1 { (msg.escape_msg()) }
+        }
+
     };
 
     page(content).into_string()
