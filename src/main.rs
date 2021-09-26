@@ -102,6 +102,9 @@ fn main() -> Result<(), Error> {
     let lang_index_page = create_index_page(&lang_map, false);
     let mut lang_index_file = home.clone();
     lang_index_file.push("language");
+    if !lang_index_file.exists() {
+        std::fs::create_dir_all(&lang_index_file).unwrap();
+    }
     lang_index_file.push("index.html");
     save_page(lang_index_file, lang_index_page);
 
