@@ -10,7 +10,7 @@ use blocks_iterator::Config;
 use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -45,6 +45,7 @@ fn main() -> Result<(), Error> {
     info!("start");
 
     let mut map: MessagesByMonth = BTreeMap::new();
+    let mut lang_set = HashSet::new();
 
     let mut params = Params::from_args();
     params.config.skip_prevout = true;
@@ -65,6 +66,9 @@ fn main() -> Result<(), Error> {
                             date,
                             msg: str.to_string(),
                         };
+                        if let Some(l) = message.detect_lang() {
+                            lang_set.insert(l);
+                        }
 
                         if !page_dirname.exists() || params.overwrite {
                             std::fs::create_dir_all(&page_dirname).unwrap();
@@ -83,6 +87,7 @@ fn main() -> Result<(), Error> {
     }
     handle.join().expect("couldn't join");
     info!("end");
+    info!("lang set: {:?}", lang_set);
 
     let index_page = create_index_page(&map);
     let mut index_file = PathBuf::new();

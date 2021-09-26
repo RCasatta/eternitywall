@@ -1,7 +1,7 @@
 use blocks_iterator::bitcoin::Txid;
 use chrono::NaiveDateTime;
 use std::borrow::Cow;
-use whatlang::detect_lang;
+use whatlang::{detect_lang, Lang};
 use std::cmp::Ordering;
 use isolang::Language;
 
@@ -12,20 +12,28 @@ pub struct Message {
 }
 
 impl Message {
+
     pub fn escape_msg(&self) -> Cow<str> {
         html_escape::encode_text(&self.msg)
     }
+
     pub fn link(&self) -> String {
         format!("/m/{}", self.txid)
     }
+
     pub fn lang(&self) -> &str {
-        if let Some(l) = detect_lang(&self.msg) {
+        if let Some(l) = self.detect_lang() {
             if let Some(l) = Language::from_639_3(l.code()) {
                 return l.to_639_1().unwrap_or("en");
             }
         }
         "en"
     }
+
+    pub fn detect_lang(&self) -> Option<Lang> {
+        detect_lang(&self.msg)
+    }
+
     pub fn date(&self) -> String {
         self.date.to_string()
     }

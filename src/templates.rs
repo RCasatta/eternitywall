@@ -109,11 +109,13 @@ fn link_year(year: &i32) -> String {
 #[cfg(test)]
 mod test {
     use crate::templates::{create_detail_page, create_index_page, create_year_page, page};
-    use crate::{Message, MessagesByMonth};
+    use crate::{MessagesByMonth};
+    use crate::message::Message;
     use blocks_iterator::bitcoin::Txid;
     use chrono::NaiveDateTime;
     use maud::html;
     use std::collections::BTreeSet;
+    use whatlang::detect_lang;
 
     #[test]
     fn test_page() {
@@ -153,6 +155,13 @@ mod test {
     fn test_lang() {
         assert_eq!(get_message().lang(), "en");
         assert_eq!(get_another_message().lang(), "it");
+        let text = "洪沛东谢家霖自习课经常说话，纪律委员金涵笑大怒";
+        println!("{:?}", detect_lang(text));
+
+        let two = isolang::Language::from_639_3("cmn").unwrap().to_639_1();
+        println!("{:?}", two);
+
+
     }
 
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
