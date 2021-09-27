@@ -74,7 +74,7 @@ impl Message {
     }
 
     pub fn detect_lang(&self) -> Option<Lang> {
-        detect(&self.msg).filter(|i| i.confidence() > 0.3 ).map(|i| i.lang())
+        detect(&self.msg).filter(|i| i.confidence() > 0.4 ).map(|i| i.lang())
     }
 
     pub fn date(&self) -> String {
