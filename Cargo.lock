@@ -81,8 +81,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 [[package]]
 name = "blocks_iterator"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af78afe8c81dd36a46d7caa73cb6e7ebebb999ea490d2b7ffde916a78d51244a"
+source = "git+https://github.com/RCasatta/blocks_iterator?branch=mem#0810cafe7447f31ee51bca5a08f76902510a8fb3"
 dependencies = [
  "bitcoin",
  "fxhash",
