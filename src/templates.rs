@@ -19,7 +19,7 @@ fn header() -> Markup {
 fn footer() -> Markup {
     html! {
         footer {
-            p { a href="/" { "Home" } a href="/about" { "About" } a href="/language" { "By language" }  }
+            p { a href="/" { "Home" } " " a href="/about" { "About" } " " a href="/language" { "By language" }  }
             p { "Page created " (now()) }
         }
 
