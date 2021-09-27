@@ -19,7 +19,7 @@ fn header() -> Markup {
 fn footer() -> Markup {
     html! {
         footer {
-            a href="/about" { "About" }
+            p { a href="/" { "Home" } a href="/about" { "About" } a href="/language" { "By language" }  }
             p { "Page created " (now()) }
         }
 
@@ -69,9 +69,10 @@ pub fn create_about() -> String {
         a href="https://blog.eternitywall.com/2016/06/01/how-to-write-a-message-on-the-blockchain" { "write a message" }
     };
     let content = html! {
-        p { "EternityWall shows message in the Bitcoin blockchain." }
+        p { "EternityWall shows message in the Bitcoin blockchain. Due to economic incentives, the Bitcoin blockchain is the nearest thing to digital eternity." }
         p { "A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\"." }
         p { "All dates are referred to the block timestamp containing the transaction and are in UTC." }
+        p { "Languages are automatically detected and they may be wrong." }
         p { "How to " (link) " with Bitcoin Core" }
     };
 
