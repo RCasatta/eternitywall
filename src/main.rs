@@ -16,6 +16,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
+use crate::templates::create_contact;
 
 #[derive(Debug)]
 enum Error {
@@ -135,6 +136,12 @@ fn main() -> Result<(), Error> {
     std::fs::create_dir_all(&about).unwrap();
     about.push("index.html");
     save_page(about, create_about());
+
+    let mut contact = home.clone();
+    contact.push("contact");
+    std::fs::create_dir_all(&contact).unwrap();
+    contact.push("index.html");
+    save_page(contact, create_contact());
 
     Ok(())
 }

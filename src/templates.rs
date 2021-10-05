@@ -19,7 +19,7 @@ fn header() -> Markup {
 fn footer() -> Markup {
     html! {
         footer {
-            p { a href="/" { "Home" } " " a href="/about" { "About" } " " a href="/language" { "By language" }  }
+            p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/language" { "By language" } " | " a href="/contact" { "Contact" }  }
             p { "Page created " (now()) }
         }
 
@@ -74,6 +74,29 @@ pub fn create_about() -> String {
         p { "All dates are referred to the block timestamp containing the transaction and are in UTC." }
         p { "Languages are automatically detected and they may be wrong." }
         p { "How to " (link) " with Bitcoin Core" }
+    };
+
+    page(content).into_string()
+}
+
+
+pub fn create_contact() -> String {
+    let content = html! {
+        h2 { "Contact" }
+        br {}
+        form action="https://formspree.io/f/xnqlrbey" method="POST" {
+            label {
+                p { "Your email:"}
+                input type="email" name="_replyto" { }
+            }
+            br {}
+            label {
+                p { "Your message:"}
+                textarea name="message" rows="4" cols="50" { }
+            }
+            br {}
+            button type="submit" { "Send" }
+        }
     };
 
     page(content).into_string()
