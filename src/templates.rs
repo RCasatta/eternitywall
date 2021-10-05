@@ -83,7 +83,6 @@ pub fn create_about() -> String {
 pub fn create_contact() -> String {
     let content = html! {
         h2 { "Contact" }
-        br {}
         form action="https://formspree.io/f/xnqlrbey" method="POST" {
             label {
                 p { "Your email:"}
@@ -96,6 +95,7 @@ pub fn create_contact() -> String {
             }
             br {}
             button type="submit" { "Send" }
+            br {}
         }
     };
 
