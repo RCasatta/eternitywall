@@ -93,6 +93,7 @@ pub fn create_contact() -> String {
                 p { "Your message:"}
                 textarea name="message" rows="4" cols="50" { }
             }
+            input type="hidden" name="_tags" value="eternitywall.it" { }
             br {}
             button type="submit" { "Send" }
             br {}
