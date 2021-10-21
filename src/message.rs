@@ -1,7 +1,7 @@
 use blocks_iterator::bitcoin::Txid;
 use chrono::NaiveDateTime;
-use whatlang::{detect, Lang};
 use std::cmp::Ordering;
+use whatlang::{detect, Lang};
 
 #[derive(Debug, Clone)]
 pub struct Message {
@@ -11,7 +11,6 @@ pub struct Message {
 }
 
 impl Message {
-
     pub fn link(&self) -> String {
         format!("/m/{}", self.txid)
     }
@@ -74,7 +73,9 @@ impl Message {
     }
 
     pub fn detect_lang(&self) -> Option<Lang> {
-        detect(&self.msg).filter(|i| i.confidence() > 0.4 ).map(|i| i.lang())
+        detect(&self.msg)
+            .filter(|i| i.confidence() > 0.4)
+            .map(|i| i.lang())
     }
 
     pub fn date(&self) -> String {
@@ -102,21 +103,18 @@ impl PartialEq for Message {
 }
 impl Eq for Message {}
 
-
 #[cfg(test)]
 pub mod test {
     use super::Message;
-    use chrono::NaiveDateTime;
     use blocks_iterator::bitcoin::Txid;
-    use whatlang::{detect};
-
+    use chrono::NaiveDateTime;
+    use whatlang::detect;
 
     #[test]
     fn test_detect() {
-
-        let detected = detect("Non lungo che tocchi, non largo che otturi, ma duro che duri.").unwrap();
+        let detected =
+            detect("Non lungo che tocchi, non largo che otturi, ma duro che duri.").unwrap();
         println!("{:?}", detected);
-
     }
 
     pub fn get_message() -> Message {

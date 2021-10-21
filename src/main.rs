@@ -1,22 +1,23 @@
-mod templates;
 mod message;
+mod templates;
 
+use crate::templates::create_contact;
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
 use blocks_iterator::log::info;
 use blocks_iterator::structopt::StructOpt;
-use blocks_iterator::Config;
+use blocks_iterator::{Config, PipeIterator};
 use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
+use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::mpsc::{sync_channel, RecvError};
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
-use crate::templates::create_contact;
 
 #[derive(Debug)]
 enum Error {
@@ -50,9 +51,10 @@ fn main() -> Result<(), Error> {
 
     let mut params = Params::from_args();
     params.config.skip_prevout = true;
-    let (send, recv) = sync_channel(100);
-    let handle = blocks_iterator::iterate(params.config.clone(), send);
-    while let Some(block_extra) = recv.recv()? {
+
+    let iter = PipeIterator::new(io::stdin(), io::stdout());
+
+    for block_extra in iter {
         for tx in block_extra.block.txdata.iter() {
             for output in tx.output.iter() {
                 if output.script_pubkey.is_op_return() {
@@ -68,7 +70,10 @@ fn main() -> Result<(), Error> {
                             msg: str.to_string(),
                         };
                         if let Some(l) = message.detect_lang() {
-                            lang_map.entry(l.eng_name().to_string()).or_insert(BTreeSet::new()).insert(message.clone());
+                            lang_map
+                                .entry(l.eng_name().to_string())
+                                .or_insert(BTreeSet::new())
+                                .insert(message.clone());
                         }
 
                         if !page_dirname.exists() || params.overwrite {
@@ -79,7 +84,9 @@ fn main() -> Result<(), Error> {
                             save_page(page_filename, page);
                         }
 
-                        let value = years_map.entry(date.year().to_string()).or_insert(BTreeSet::new());
+                        let value = years_map
+                            .entry(date.year().to_string())
+                            .or_insert(BTreeSet::new());
                         value.insert(message);
                     }
                 }
@@ -88,7 +95,7 @@ fn main() -> Result<(), Error> {
     }
     handle.join().expect("couldn't join");
     info!("end");
-    lang_map.iter().for_each(|(k,v)| {
+    lang_map.iter().for_each(|(k, v)| {
         info!("{}: {}", k, v.len());
     });
 

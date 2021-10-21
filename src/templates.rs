@@ -1,5 +1,5 @@
-use crate::{now, MessagesByCat};
 use crate::message::Message;
+use crate::{now, MessagesByCat};
 use maud::{html, Markup, DOCTYPE};
 use std::collections::BTreeSet;
 
@@ -79,7 +79,6 @@ pub fn create_about() -> String {
     page(content).into_string()
 }
 
-
 pub fn create_contact() -> String {
     let content = html! {
         h2 { "Contact" }
@@ -149,12 +148,12 @@ fn link_cat(cat: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use crate::message::test::{get_another_message, get_message};
     use crate::templates::{create_detail_page, create_index_page, create_list_page, page};
-    use crate::{MessagesByCat};
+    use crate::MessagesByCat;
     use maud::html;
     use std::collections::BTreeSet;
     use whatlang::detect_lang;
-    use crate::message::test::{get_message, get_another_message};
 
     #[test]
     fn test_page() {
@@ -165,8 +164,8 @@ mod test {
 
     #[test]
     fn test_escape() {
-        let a = html!{ p { "<>" } };
-        assert_eq!(a.into_string(),"<p>&lt;&gt;</p>");
+        let a = html! { p { "<>" } };
+        assert_eq!(a.into_string(), "<p>&lt;&gt;</p>");
     }
 
     #[test]
@@ -208,5 +207,4 @@ mod test {
         let base64 = base64::encode(input.as_ref());
         format!("data:{};base64,{}", content_type, base64)
     }
-
 }
