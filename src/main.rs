@@ -7,7 +7,7 @@ use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
 use blocks_iterator::log::info;
 use blocks_iterator::structopt::StructOpt;
-use blocks_iterator::{Config, PipeIterator};
+use blocks_iterator::PipeIterator;
 use chrono::format::StrftimeItems;
 use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
@@ -16,7 +16,7 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::mpsc::{sync_channel, RecvError};
+use std::sync::mpsc::RecvError;
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
 
 #[derive(Debug)]
@@ -32,12 +32,13 @@ impl From<RecvError> for Error {
 
 #[derive(StructOpt, Debug, Clone)]
 struct Params {
-    #[structopt(flatten)]
-    config: Config,
-
     /// Overwrite generated html files instead of skipping if they exists
     #[structopt(short, long)]
     pub overwrite: bool,
+
+    /// Where to produce the website
+    #[structopt(short, long)]
+    pub target_dir: PathBuf,
 }
 
 type MessagesByCat = BTreeMap<String, BTreeSet<message::Message>>;
@@ -49,8 +50,9 @@ fn main() -> Result<(), Error> {
     let mut years_map: MessagesByCat = BTreeMap::new();
     let mut lang_map: MessagesByCat = BTreeMap::new();
 
-    let mut params = Params::from_args();
-    params.config.skip_prevout = true;
+    let params = Params::from_args();
+    let mut home = params.target_dir.clone();
+    home.push("_site");
 
     let iter = PipeIterator::new(io::stdin(), io::stdout());
 
@@ -60,7 +62,7 @@ fn main() -> Result<(), Error> {
                 if output.script_pubkey.is_op_return() {
                     if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
                         let txid = tx.txid();
-                        let page_dirname = page_dirname(&txid);
+                        let page_dirname = page_dirname(&home, &txid);
                         let date =
                             NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
 
@@ -93,14 +95,10 @@ fn main() -> Result<(), Error> {
             }
         }
     }
-    handle.join().expect("couldn't join");
     info!("end");
     lang_map.iter().for_each(|(k, v)| {
         info!("{}: {}", k, v.len());
     });
-
-    let mut home = PathBuf::new();
-    home.push("_site");
 
     let index_page = create_index_page(&years_map, true);
     let mut index_file = home.clone();
@@ -153,9 +151,8 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn page_dirname(txid: &Txid) -> PathBuf {
-    let mut path = PathBuf::new();
-    path.push("_site");
+fn page_dirname(home: &PathBuf, txid: &Txid) -> PathBuf {
+    let mut path = home.clone();
     path.push("m");
     path.push(txid.to_string());
     path
