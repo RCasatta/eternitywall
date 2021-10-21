@@ -16,19 +16,10 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::mpsc::RecvError;
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
 
 #[derive(Debug)]
-enum Error {
-    Recv(RecvError),
-}
-
-impl From<RecvError> for Error {
-    fn from(r: RecvError) -> Self {
-        Error::Recv(r)
-    }
-}
+enum Error {}
 
 #[derive(StructOpt, Debug, Clone)]
 struct Params {
@@ -79,7 +70,6 @@ fn main() -> Result<(), Error> {
                         }
 
                         if !page_dirname.exists() || params.overwrite {
-                            std::fs::create_dir_all(&page_dirname).unwrap();
                             let mut page_filename = page_dirname;
                             page_filename.push("index.html");
                             let page = create_detail_page(&message);
@@ -108,9 +98,6 @@ fn main() -> Result<(), Error> {
     let lang_index_page = create_index_page(&lang_map, false);
     let mut lang_index_file = home.clone();
     lang_index_file.push("language");
-    if !lang_index_file.exists() {
-        std::fs::create_dir_all(&lang_index_file).unwrap();
-    }
     lang_index_file.push("index.html");
     save_page(lang_index_file, lang_index_page);
 
@@ -118,9 +105,6 @@ fn main() -> Result<(), Error> {
         let page = create_list_page(&k.to_string(), v);
         let mut month_file = home.clone();
         month_file.push(&k.to_string());
-        if !month_file.exists() {
-            std::fs::create_dir_all(&month_file).unwrap();
-        }
         month_file.push("index.html");
         save_page(month_file, page)
     }
@@ -129,22 +113,17 @@ fn main() -> Result<(), Error> {
         let page = create_list_page(&lang_string, v);
         let mut lang_file = home.clone();
         lang_file.push(&lang_string);
-        if !lang_file.exists() {
-            std::fs::create_dir_all(&lang_file).unwrap();
-        }
         lang_file.push("index.html");
         save_page(lang_file, page)
     }
 
     let mut about = home.clone();
     about.push("about");
-    std::fs::create_dir_all(&about).unwrap();
     about.push("index.html");
     save_page(about, create_about());
 
     let mut contact = home.clone();
     contact.push("contact");
-    std::fs::create_dir_all(&contact).unwrap();
     contact.push("index.html");
     save_page(contact, create_contact());
 
@@ -159,6 +138,10 @@ fn page_dirname(home: &PathBuf, txid: &Txid) -> PathBuf {
 }
 
 fn save_page(filename: PathBuf, page: String) {
+    let parent = filename.parent().unwrap();
+    if !parent.exists() {
+        std::fs::create_dir_all(parent).unwrap();
+    }
     let mut file = File::create(filename).unwrap();
     file.write(page.as_bytes()).unwrap();
 }

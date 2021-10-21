@@ -3,10 +3,8 @@ name = "eternitywall-site"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-blocks_iterator = "0.9.0"
+blocks_iterator = "0.10.0"
 env_logger = "0.9"
 chrono = "0.4.19"
 maud = "0.22.2"

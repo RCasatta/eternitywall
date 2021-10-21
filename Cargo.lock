@@ -80,9 +80,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blocks_iterator"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d6711417c895e470f8674880b0c9cd5fa054f3bbc346b0945fa348ea01ddae5"
+checksum = "ce46c24878946b7529944718bfab4f93a3396aca02a7979bc195d828c7e44896"
 dependencies = [
  "bitcoin",
  "env_logger",
