@@ -34,7 +34,7 @@ pub fn page(content: Markup) -> Markup {
         (DOCTYPE)
         html lang = "en" {
             (header())
-            body {
+            body style="font-family: Arial, Helvetica, sans-serif;" {
                 h1 { a href="/" { "EternityWall" } }
                 (content)
                 (footer())
@@ -129,6 +129,7 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
 
             }
         }
+        br { }
     };
 
     page(list).into_string()
