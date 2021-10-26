@@ -43,7 +43,7 @@ fn main() -> Result<(), Error> {
 
     let params = Params::from_args();
     let mut home = params.target_dir.clone();
-    home.push("_site");
+    home.push("site");
 
     let iter = PipeIterator::new(io::stdin(), io::stdout());
 
