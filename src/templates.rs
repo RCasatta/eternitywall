@@ -52,10 +52,12 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
         ul {
             @for cat in cats {
                 li {
-                    a href=(link_cat(cat)) { (cat) }
-                    " ("
-                    (map.get(cat).unwrap().len().to_string())
-                    ")"
+                    p {
+                        a href=(link_cat(cat)) { (cat) }
+                        " ("
+                        (map.get(cat).unwrap().len().to_string())
+                        ")"
+                    }
                 }
             }
         }
@@ -109,15 +111,19 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
             @for msg in &messages {
                 @if let Some(lang) = msg.lang() {
                     li {
-                        a href=(msg.link()) { (msg.date()) }
-                        " - "
-                        span lang=(lang) { (msg.msg) }
+                        p {
+                            a href=(msg.link()) { (msg.date()) }
+                            " - "
+                            span lang=(lang) { (msg.msg) }
+                        }
                     }
                 } @else {
                     li {
-                        a href=(msg.link()) { (msg.date()) }
-                        " - "
-                        { (msg.msg) }
+                        p {
+                            a href=(msg.link()) { (msg.date()) }
+                            " - "
+                            { (msg.msg) }
+                        }
                     }
                 }
 
