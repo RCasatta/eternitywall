@@ -49,6 +49,7 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
         cats.reverse();
     }
     let list = html! {
+        br { }
         ul {
             @for cat in cats {
                 li {
@@ -61,6 +62,7 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
                 }
             }
         }
+        br { }
     };
 
     page(list).into_string()
@@ -107,6 +109,7 @@ pub fn create_contact() -> String {
 pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
     let list = html! {
         h2 { (title) }
+        br { }
         ul {
             @for msg in &messages {
                 @if let Some(lang) = msg.lang() {
