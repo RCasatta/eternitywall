@@ -18,6 +18,7 @@ fn header() -> Markup {
 /// A static footer.
 fn footer() -> Markup {
     html! {
+        br { }
         footer {
             p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/language" { "By language" } " | " a href="/contact" { "Contact" }  }
             p { "Page created " (now()) }
@@ -62,22 +63,27 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
                 }
             }
         }
-        br { }
     };
 
     page(list).into_string()
 }
 
 pub fn create_about() -> String {
-    let link = html! {
+    let core_link = html! {
         a href="https://blog.eternitywall.com/2016/06/01/how-to-write-a-message-on-the-blockchain" { "write a message" }
     };
+
+    let electrum_link = html! {
+        a href="https://twitter.com/electrumwallet/status/1380058456854528001" { "use electrum too" }
+    };
+
     let content = html! {
         p { "EternityWall shows message in the Bitcoin blockchain. Due to economic incentives, the Bitcoin blockchain is the nearest thing to digital eternity." }
         p { "A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\"." }
         p { "All dates are referred to the block timestamp containing the transaction and are in UTC." }
         p { "Languages are automatically detected and they may be wrong." }
-        p { "How to " (link) " with Bitcoin Core" }
+        p { "How to " (core_link) " with Bitcoin Core" }
+        p { "You can " (electrum_link) ", but remember to start with hex `4557` (EW) "}
     };
 
     page(content).into_string()
