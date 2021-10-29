@@ -18,7 +18,7 @@ fn header() -> Markup {
 /// A static footer.
 fn footer() -> Markup {
     html! {
-        br { }
+        p { "&nbsp;" }
         footer {
             p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/language" { "By language" } " | " a href="/contact" { "Contact" }  }
             p { "Page created " (now()) }
@@ -50,7 +50,7 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
         cats.reverse();
     }
     let list = html! {
-        br { }
+        p { "&nbsp;" }
         ul {
             @for cat in cats {
                 li {
@@ -97,15 +97,15 @@ pub fn create_contact() -> String {
                 p { "Your email:"}
                 input type="email" name="_replyto" { }
             }
-            br {}
+            p { "&nbsp;" }
             label {
                 p { "Your message:"}
                 textarea name="message" rows="4" cols="50" { }
             }
             input type="hidden" name="_tags" value="eternitywall.it" { }
-            br {}
+            p { "&nbsp;" }
             button type="submit" { "Send" }
-            br {}
+            p { "&nbsp;" }
         }
     };
 
@@ -115,7 +115,7 @@ pub fn create_contact() -> String {
 pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
     let list = html! {
         h2 { (title) }
-        br { }
+        p { "&nbsp;" }
         ul {
             @for msg in &messages {
                 @if let Some(lang) = msg.lang() {
@@ -138,7 +138,6 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
 
             }
         }
-        br { }
     };
 
     page(list).into_string()
