@@ -1,7 +1,9 @@
 use crate::message::Message;
 use crate::{now, MessagesByCat};
-use maud::{html, Markup, DOCTYPE};
+use maud::{html, Markup, DOCTYPE, PreEscaped};
 use std::collections::BTreeSet;
+
+const NBSP: PreEscaped<&str> = PreEscaped("&nbsp;");
 
 /// A basic header with a dynamic `page_title`.
 fn header() -> Markup {
@@ -18,7 +20,7 @@ fn header() -> Markup {
 /// A static footer.
 fn footer() -> Markup {
     html! {
-        p { "&nbsp;" }
+        p { (NBSP) }
         footer {
             p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/language" { "By language" } " | " a href="/contact" { "Contact" }  }
             p { "Page created " (now()) }
@@ -50,7 +52,7 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
         cats.reverse();
     }
     let list = html! {
-        p { "&nbsp;" }
+        p { (NBSP) }
         ul {
             @for cat in cats {
                 li {
@@ -97,15 +99,15 @@ pub fn create_contact() -> String {
                 p { "Your email:"}
                 input type="email" name="_replyto" { }
             }
-            p { "&nbsp;" }
+            p { (NBSP) }
             label {
                 p { "Your message:"}
                 textarea name="message" rows="4" cols="50" { }
             }
             input type="hidden" name="_tags" value="eternitywall.it" { }
-            p { "&nbsp;" }
+            p { (NBSP) }
             button type="submit" { "Send" }
-            p { "&nbsp;" }
+            p { (NBSP) }
         }
     };
 
@@ -115,7 +117,7 @@ pub fn create_contact() -> String {
 pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
     let list = html! {
         h2 { (title) }
-        p { "&nbsp;" }
+        p { (NBSP) }
         ul {
             @for msg in &messages {
                 @if let Some(lang) = msg.lang() {
