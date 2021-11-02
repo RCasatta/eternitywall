@@ -39,6 +39,7 @@ pub fn page(content: Markup) -> Markup {
             (header())
             body style="font-family: Arial, Helvetica, sans-serif;" {
                 h1 { a href="/" { "EternityWall" } }
+                (NBSP)
                 (content)
                 (footer())
             }
@@ -52,7 +53,6 @@ pub fn create_index_page(map: &MessagesByCat, reverse: bool) -> String {
         cats.reverse();
     }
     let list = html! {
-        p { (NBSP) }
         ul {
             @for cat in cats {
                 li {
