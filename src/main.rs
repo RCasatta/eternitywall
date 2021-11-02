@@ -13,7 +13,7 @@ use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
-use std::io;
+use std::{fs, io};
 use std::io::Write;
 use std::path::PathBuf;
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
@@ -126,6 +126,12 @@ fn main() -> Result<(), Error> {
     contact.push("contact");
     contact.push("index.html");
     save_page(contact, create_contact());
+
+    // favicon
+    let mut favicon_file = home.clone();
+    favicon_file.push("favicon.ico");
+    let favicon = include_bytes!("../target_dir/site/favicon.ico");
+    fs::write(favicon_file, &favicon).unwrap();
 
     Ok(())
 }
