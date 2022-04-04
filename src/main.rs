@@ -13,9 +13,9 @@ use chrono::{Datelike, NaiveDateTime, Utc};
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
-use std::{fs, io};
 use std::io::Write;
 use std::path::PathBuf;
+use std::{fs, io};
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ fn main() -> Result<(), Error> {
     let mut home = params.target_dir.clone();
     home.push("site");
 
-    let iter = PipeIterator::new(io::stdin(), io::stdout());
+    let iter = PipeIterator::new(io::stdin(), None);
 
     for block_extra in iter {
         for tx in block_extra.block.txdata.iter() {

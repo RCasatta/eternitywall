@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-blocks_iterator = "0.10.0"
+blocks_iterator = "0.11.0"
 env_logger = "0.9"
 chrono = "0.4.19"
-maud = "0.22.2"
-whatlang = "0.12.0"
+maud = "0.23"
+whatlang = "0.13"
 structopt = "0.3.21" # cannot use re-exported cause I need macros
 
 [dev-dependencies]
