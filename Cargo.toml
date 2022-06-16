@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-blocks_iterator = "0.11.0"
+blocks_iterator = "1.0.0"
 env_logger = "0.9"
 chrono = "0.4.19"
 maud = "0.23"

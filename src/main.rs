@@ -48,17 +48,16 @@ fn main() -> Result<(), Error> {
     let iter = PipeIterator::new(io::stdin(), None);
 
     for block_extra in iter {
-        for tx in block_extra.block.txdata.iter() {
+        for (txid, tx) in block_extra.iter_tx() {
             for output in tx.output.iter() {
                 if output.script_pubkey.is_op_return() {
                     if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
-                        let txid = tx.txid();
                         let page_dirname = page_dirname(&home, &txid);
                         let date =
                             NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
 
                         let message = message::Message {
-                            txid,
+                            txid: *txid,
                             date,
                             msg: str.to_string(),
                         };
