@@ -79,12 +79,17 @@ pub fn create_about() -> String {
         a href="https://twitter.com/electrumwallet/status/1380058456854528001" { "use electrum too" }
     };
 
+    let blocks_iterator = html! {
+        a href="https://github.com/RCasatta/blocks_iterator" { "blocks iterator" }
+    };
+
     let content = html! {
         p { "EternityWall shows message in the Bitcoin blockchain. Due to economic incentives, the Bitcoin blockchain is the nearest thing to digital eternity." }
         p { "A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\"." }
         p { "All dates are referred to the block timestamp containing the transaction and are in UTC." }
-        p { "How to " (core_link) " with Bitcoin Core" }
-        p { "You can " (electrum_link) ", but remember to start with hex `4557` (EW) "}
+        p { "How to " (core_link) " with Bitcoin Core." }
+        p { "You can " (electrum_link) ", but remember to start with hex `4557` (EW)."}
+        p { "Built with " (blocks_iterator) "." }
     };
 
     page(content).into_string()
