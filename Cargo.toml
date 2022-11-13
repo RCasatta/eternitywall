@@ -8,7 +8,6 @@ blocks_iterator = { version = "1.0.0", default-features = false }
 env_logger = "0.9"
 chrono = "0.4.19"
 maud = "0.23"
-whatlang = "0.13"
 structopt = "0.3.21" # cannot use re-exported cause I need macros
 
 [dev-dependencies]

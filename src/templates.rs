@@ -83,7 +83,6 @@ pub fn create_about() -> String {
         p { "EternityWall shows message in the Bitcoin blockchain. Due to economic incentives, the Bitcoin blockchain is the nearest thing to digital eternity." }
         p { "A message is a transaction with an OP_RETURN output containing valid utf-8 starting with characters \"EW\"." }
         p { "All dates are referred to the block timestamp containing the transaction and are in UTC." }
-        p { "Languages are automatically detected and they may be wrong." }
         p { "How to " (core_link) " with Bitcoin Core" }
         p { "You can " (electrum_link) ", but remember to start with hex `4557` (EW) "}
     };
@@ -121,24 +120,13 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
         p { (NBSP) }
         ul {
             @for msg in &messages {
-                @if let Some(lang) = msg.lang() {
-                    li {
-                        p {
-                            a href=(msg.link()) { (msg.date()) }
-                            " - "
-                            span lang=(lang) { (msg.msg) }
-                        }
-                    }
-                } @else {
-                    li {
-                        p {
-                            a href=(msg.link()) { (msg.date()) }
-                            " - "
-                            { (msg.msg) }
-                        }
+                li {
+                    p {
+                        a href=(msg.link()) { (msg.date()) }
+                        " - "
+                        { (msg.msg) }
                     }
                 }
-
             }
         }
     };
@@ -149,12 +137,7 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
 pub fn create_detail_page(msg: &Message) -> String {
     let content = html! {
         h2 { (msg.date()) " UTC" }
-        @if let Some(lang) = msg.lang() {
-            h1 { span lang=(lang) { (msg.msg) }  }
-        } @else {
-            h1 { (msg.msg) }
-        }
-
+        h1 { (msg.msg) }
     };
 
     page(content).into_string()

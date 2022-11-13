@@ -39,7 +39,6 @@ fn main() -> Result<(), Error> {
     info!("start");
 
     let mut years_map: MessagesByCat = BTreeMap::new();
-    let mut lang_map: MessagesByCat = BTreeMap::new();
 
     let params = Params::from_args();
     let mut home = params.target_dir.clone();
@@ -61,12 +60,6 @@ fn main() -> Result<(), Error> {
                             date,
                             msg: str.to_string(),
                         };
-                        if let Some(l) = message.detect_lang() {
-                            lang_map
-                                .entry(l.eng_name().to_string())
-                                .or_insert(BTreeSet::new())
-                                .insert(message.clone());
-                        }
 
                         if !page_dirname.exists() || params.overwrite {
                             let mut page_filename = page_dirname;
@@ -85,20 +78,11 @@ fn main() -> Result<(), Error> {
         }
     }
     info!("end");
-    lang_map.iter().for_each(|(k, v)| {
-        info!("{}: {}", k, v.len());
-    });
 
     let index_page = create_index_page(&years_map, true);
     let mut index_file = home.clone();
     index_file.push("index.html");
     save_page(index_file, index_page);
-
-    let lang_index_page = create_index_page(&lang_map, false);
-    let mut lang_index_file = home.clone();
-    lang_index_file.push("language");
-    lang_index_file.push("index.html");
-    save_page(lang_index_file, lang_index_page);
 
     for (k, v) in years_map {
         let page = create_list_page(&k.to_string(), v);
@@ -106,14 +90,6 @@ fn main() -> Result<(), Error> {
         month_file.push(&k.to_string());
         month_file.push("index.html");
         save_page(month_file, page)
-    }
-
-    for (lang_string, v) in lang_map {
-        let page = create_list_page(&lang_string, v);
-        let mut lang_file = home.clone();
-        lang_file.push(&lang_string);
-        lang_file.push("index.html");
-        save_page(lang_file, page)
     }
 
     let mut about = home.clone();
