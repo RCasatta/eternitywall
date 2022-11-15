@@ -22,7 +22,7 @@ fn footer() -> Markup {
     html! {
         p { (NBSP) }
         footer {
-            p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/language" { "By language" } " | " a href="/contact" { "Contact" }  }
+            p { a href="/" { "Home" } " | " a href="/about" { "About" } " | " a href="/contact" { "Contact" }  }
             p { "Page created " (now()) }
         }
 
