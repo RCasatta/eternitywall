@@ -23,10 +23,6 @@ enum Error {}
 
 #[derive(StructOpt, Debug, Clone)]
 struct Params {
-    /// Overwrite generated html files instead of skipping if they exists
-    #[structopt(short, long)]
-    pub overwrite: bool,
-
     /// Where to produce the website
     #[structopt(short, long)]
     pub target_dir: PathBuf,
@@ -61,7 +57,7 @@ fn main() -> Result<(), Error> {
                             msg: str.to_string(),
                         };
 
-                        if !page_dirname.exists() || params.overwrite {
+                        if !page_dirname.exists() {
                             let mut page_filename = page_dirname;
                             page_filename.push("index.html");
                             let page = create_detail_page(&message);

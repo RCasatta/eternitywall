@@ -44,14 +44,6 @@ pub mod test {
     use super::Message;
     use blocks_iterator::bitcoin::Txid;
     use chrono::NaiveDateTime;
-    use whatlang::detect;
-
-    #[test]
-    fn test_detect() {
-        let detected =
-            detect("Non lungo che tocchi, non largo che otturi, ma duro che duri.").unwrap();
-        println!("{:?}", detected);
-    }
 
     pub fn get_message() -> Message {
         Message {

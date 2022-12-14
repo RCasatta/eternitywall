@@ -1,6 +1,6 @@
 use crate::message::Message;
 use crate::{now, MessagesByCat};
-use maud::{html, Markup, DOCTYPE, PreEscaped};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 use std::collections::BTreeSet;
 
 const NBSP: PreEscaped<&str> = PreEscaped("&nbsp;");
@@ -140,9 +140,13 @@ pub fn create_list_page(title: &str, messages: BTreeSet<Message>) -> String {
 }
 
 pub fn create_detail_page(msg: &Message) -> String {
+    let link = format!("https://fbbe.info/t/{}", msg.txid);
     let content = html! {
         h2 { (msg.date()) " UTC" }
         h1 { (msg.msg) }
+        (NBSP)
+
+        p { a href=(link) { "View tx" } }
     };
 
     page(content).into_string()
@@ -159,7 +163,6 @@ mod test {
     use crate::MessagesByCat;
     use maud::html;
     use std::collections::BTreeSet;
-    use whatlang::detect_lang;
 
     #[test]
     fn test_page() {
@@ -200,15 +203,6 @@ mod test {
         let page = create_list_page("2020", set);
         assert_eq!("", to_data_url(&page, "text/html"));
     }
-
-    #[test]
-    fn test_lang() {
-        assert_eq!(get_message().lang(), Some("en"));
-        assert_eq!(get_another_message().lang(), Some("it"));
-        let text = "洪沛东谢家霖自习课经常说话，纪律委员金涵笑大怒";
-        println!("{:?}", detect_lang(text));
-    }
-
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
         let base64 = base64::encode(input.as_ref());
         format!("data:{};base64,{}", content_type, base64)
