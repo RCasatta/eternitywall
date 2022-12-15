@@ -57,12 +57,10 @@ fn main() -> Result<(), Error> {
                             msg: str.to_string(),
                         };
 
-                        if !page_dirname.exists() {
-                            let mut page_filename = page_dirname;
-                            page_filename.push("index.html");
-                            let page = create_detail_page(&message);
-                            save_page(page_filename, page);
-                        }
+                        let mut page_filename = page_dirname;
+                        page_filename.push("index.html");
+                        let page = create_detail_page(&message);
+                        save_page(page_filename, page);
 
                         let value = years_map
                             .entry(date.year().to_string())
