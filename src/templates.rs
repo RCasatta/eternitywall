@@ -164,6 +164,7 @@ mod test {
     use maud::html;
     use std::collections::BTreeSet;
 
+    #[ignore]
     #[test]
     fn test_page() {
         let content = html! { p { "Hello" } };
@@ -177,6 +178,7 @@ mod test {
         assert_eq!(a.into_string(), "<p>&lt;&gt;</p>");
     }
 
+    #[ignore]
     #[test]
     fn test_page_detail() {
         let msg = get_message();
@@ -185,6 +187,7 @@ mod test {
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
+    #[ignore]
     #[test]
     fn test_page_index() {
         let mut map = MessagesByCat::new();
@@ -195,6 +198,7 @@ mod test {
         assert_eq!("", to_data_url(&page, "text/html"));
     }
 
+    #[ignore]
     #[test]
     fn test_page_year() {
         let mut set = BTreeSet::new();

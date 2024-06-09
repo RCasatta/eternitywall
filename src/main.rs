@@ -9,7 +9,7 @@ use blocks_iterator::log::info;
 use blocks_iterator::structopt::StructOpt;
 use blocks_iterator::PipeIterator;
 use chrono::format::StrftimeItems;
-use chrono::{Datelike, NaiveDateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -49,7 +49,8 @@ fn main() -> Result<(), Error> {
                     if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
                         let page_dirname = page_dirname(&home, &txid);
                         let date =
-                            NaiveDateTime::from_timestamp(block_extra.block.header.time as i64, 0);
+                            DateTime::from_timestamp(block_extra.block.header.time as i64, 0)
+                                .expect("invalid timestamp");
 
                         let message = message::Message {
                             txid: *txid,

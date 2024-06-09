@@ -1,11 +1,11 @@
 use blocks_iterator::bitcoin::Txid;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
 pub struct Message {
     pub txid: Txid,
-    pub date: NaiveDateTime,
+    pub date: DateTime<Utc>,
     pub msg: String,
 }
 
@@ -43,19 +43,19 @@ impl Eq for Message {}
 pub mod test {
     use super::Message;
     use blocks_iterator::bitcoin::Txid;
-    use chrono::NaiveDateTime;
+    use chrono::DateTime;
 
     pub fn get_message() -> Message {
         Message {
             msg: "Atoms are made of universes".to_string(),
-            date: NaiveDateTime::from_timestamp(1445192722 as i64, 0),
+            date: DateTime::from_timestamp(1445192722 as i64, 0).unwrap(),
             txid: Txid::default(),
         }
     }
     pub fn get_another_message() -> Message {
         Message {
             msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
-            date: NaiveDateTime::from_timestamp(1445194722 as i64, 0),
+            date: DateTime::from_timestamp(1445194722 as i64, 0).unwrap(),
             txid: Txid::default(),
         }
     }
