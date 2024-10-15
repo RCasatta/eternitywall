@@ -106,7 +106,7 @@ pub fn create_contact() -> String {
             p { (NBSP) }
             label {
                 p { "Your message:"}
-                textarea name="message" rows="4" cols="50" { }
+                textarea name="message" rows="4" cols="50" required { }
             }
             input type="hidden" name="to_enc" value="e1v9nk2tt9de3hy7tsw35k7m3wdaexwtmkxy9z603qtqer2df38ys9vaz5d4ukxvz20py5c6rw2fuhqm3jxft57n6pv9zygd26g935jdzrfa38wvfkf344zvt0pfchsjr30ff9ydm00f895ctx9ddx56m2gg6z7dtcwp457krwt9ryjume2ymku63kvgu5gmc295lzqmpkdc4njffdvaex2ctnv5s8qam4pf3y52ehf3hkwcjcf3zy22mvgg6xyan2f9x4wn2vxfqhjmmsdpuyxwrwd9zxw4ntdech24nj29v4gc6x0ftn2afe29jhs666v4456m63pfcx54jstyu9j5nkdeg4qa2sx4ry2ef4xpmkjk23g5ch5e6gwfxysstegy9z6tfdypt8zj6ed56xg52ew4t9qde5w46xsn6p2cuk64tk9dyy7ef5d5mz7upjfpu4ze28t92kg3g2kfezjm3tna7gpsxvrkyykay9war4l99pvzcrm9hhwecsmmz63kr0t7at5ku0mvhlnhckshrsg0kgggeymg4l64z5rja2qgyvn5u" { }
             input type="hidden" name="subject_enc" value="e1v9nk2tt9de3hy7tsw35k7m3wdaexwtmkxy9z603qtqer2df38ysx6vnvgd4yzm3c2adyjajpgetnjee0d3xnv72fgs68wj2kduuhzwpjw32xgk24wemj75tnpfnysu2yxa5hgans24rk5nz6xumnqvmztfk82c6kf3vk6a6009xrzd2s892rg2enwce9z6c295lzq7rey4mj62t7xckkwun9v9ek2zjcda6n2mrvdfp4v7p5xam8xnrng34yw3t5xg6y6jenwekkxd6dge2nyjrydpfy7m6vgsm9gntvt9gk23fk8p4y7vrwvey5jajk2yenvzj3092zk62rvvmnwkfnt95nsvettftyc5zsg9uyy5nswd99wtm9g3dxz3zp2cm8s6j32dhrqmnn2pp9x7z02fe4x4espgkj6tfq0furxmrf2frhwt6cd3yyxt69vfn5j2mhtfy5kn2xvguyycm6295x2jmvx46825ntv9ax7zn48cxpar7u2433vswnlj0r23n3y33gn6d4esc67zj2adrf8ptwttcuqayvzmpvpef9q56gm7n5rpgr5kw99uy6nzws" { }
