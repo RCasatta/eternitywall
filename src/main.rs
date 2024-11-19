@@ -31,7 +31,11 @@ struct Params {
 type MessagesByCat = BTreeMap<String, BTreeSet<message::Message>>;
 
 fn main() -> Result<(), Error> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    let mut builder = env_logger::Builder::from_env(Env::default().default_filter_or("info"));
+    if std::env::var("LOG_AVOID_TIMESTAMP").is_ok() {
+        builder.format(|buf, r| writeln!(buf, "{:5} {} {}", r.level(), r.target(), r.args()));
+    }
+    builder.init();
     info!("start");
 
     let mut years_map: MessagesByCat = BTreeMap::new();
