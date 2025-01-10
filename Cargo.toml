@@ -9,6 +9,7 @@ env_logger = "0.9"
 chrono = "0.4.19"
 maud = "0.23"
 structopt = "0.3.21"                                               # cannot use re-exported cause I need macros
+log = "0.4.22"
 
 [dev-dependencies]
 base64 = "0.13.0"
