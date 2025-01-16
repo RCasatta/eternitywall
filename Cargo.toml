@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-# blocks_iterator = { version = "2.0.0", default-features = false }
-blocks_iterator = { path = "../blocks_iterator/lib", version = "2.0.0", default-features = false }
+blocks_iterator = { version = "2.1.0", default-features = false }
 env_logger = "0.9"
 chrono = "0.4.19"
 maud = "0.23"
