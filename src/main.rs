@@ -6,10 +6,10 @@ use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
 use blocks_iterator::log::info;
-use blocks_iterator::structopt::StructOpt;
 use blocks_iterator::PipeIterator;
 use chrono::format::StrftimeItems;
 use chrono::{DateTime, Datelike, Utc};
+use clap::Parser;
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -21,10 +21,10 @@ use templates::{create_about, create_detail_page, create_index_page, create_list
 #[derive(Debug)]
 enum Error {}
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 struct Params {
     /// Where to produce the website
-    #[structopt(short, long)]
+    #[clap(short, long)]
     pub target_dir: PathBuf,
 }
 
@@ -36,7 +36,7 @@ fn main() -> Result<(), Error> {
 
     let mut years_map: MessagesByCat = BTreeMap::new();
 
-    let params = Params::from_args();
+    let params = Params::parse();
     let mut home = params.target_dir.clone();
     home.push("site");
 
@@ -49,7 +49,7 @@ fn main() -> Result<(), Error> {
                     if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
                         let page_dirname = page_dirname(&home, &txid);
                         let date =
-                            DateTime::from_timestamp(block_extra.block.header.time as i64, 0)
+                            DateTime::from_timestamp(block_extra.block().header.time as i64, 0)
                                 .expect("invalid timestamp");
 
                         let message = message::Message {
@@ -126,7 +126,8 @@ fn ew_str_from_op_return(script: &Script) -> Option<&str> {
     let mut instructions = script.instructions();
     if let Some(Ok(Instruction::Op(all))) = instructions.next() {
         if all == OP_RETURN {
-            if let Some(Ok(Instruction::PushBytes(bytes))) = instructions.next() {
+            if let Some(Ok(Instruction::PushBytes(push_bytes))) = instructions.next() {
+                let bytes = push_bytes.as_bytes();
                 if bytes.len() > 2 && bytes[0] == 0x45 && bytes[1] == 0x57 {
                     return Some(std::str::from_utf8(&bytes[2..]).ok()?);
                 }
@@ -166,12 +167,15 @@ fn init_logging() {
 mod test {
     use crate::ew_str_from_op_return;
     use blocks_iterator::bitcoin::Script;
-    use std::str::FromStr;
 
     #[test]
     fn test_parsing() {
         // op_return script in tx 0e20ae6ed9d1de7eb84823bfb4445fc3421e489c31d7694693b2fecb7d184807
-        let script = Script::from_str("6a1645574275696c64696e67207468652077616c6c2e2e2e").unwrap();
+        let bytes = [
+            0x6au8, 0x16, 0x45, 0x57, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x20, 0x74,
+            0x68, 0x65, 0x20, 0x77, 0x61, 0x6c, 0x6c, 0x2e, 0x2e, 0x2e,
+        ];
+        let script = Script::from_bytes(&bytes[..]);
         let result = ew_str_from_op_return(&script);
         assert_eq!(result, Some("Building the wall..."));
     }

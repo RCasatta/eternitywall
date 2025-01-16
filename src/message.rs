@@ -42,21 +42,21 @@ impl Eq for Message {}
 #[cfg(test)]
 pub mod test {
     use super::Message;
-    use blocks_iterator::bitcoin::Txid;
+    use blocks_iterator::bitcoin::hashes::Hash;
     use chrono::DateTime;
 
     pub fn get_message() -> Message {
         Message {
             msg: "Atoms are made of universes".to_string(),
             date: DateTime::from_timestamp(1445192722 as i64, 0).unwrap(),
-            txid: Txid::default(),
+            txid: Hash::all_zeros(),
         }
     }
     pub fn get_another_message() -> Message {
         Message {
             msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
             date: DateTime::from_timestamp(1445194722 as i64, 0).unwrap(),
-            txid: Txid::default(),
+            txid: Hash::all_zeros(),
         }
     }
 }
