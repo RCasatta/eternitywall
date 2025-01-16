@@ -2,6 +2,8 @@ mod message;
 mod templates;
 
 use crate::templates::create_contact;
+use bitcoin_slices::bitcoin_hashes::Hash;
+use bitcoin_slices::{bitcoin, bsl, Visit, Visitor};
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
@@ -42,34 +44,30 @@ fn main() -> Result<(), Error> {
 
     let iter = PipeIterator::new(io::stdin(), None);
 
+    let mut visitor = BlockVisitor::new();
     for block_extra in iter {
-        for (txid, tx) in block_extra.iter_tx() {
-            for output in tx.output.iter() {
-                if output.script_pubkey.is_op_return() {
-                    if let Some(str) = ew_str_from_op_return(&output.script_pubkey) {
-                        let page_dirname = page_dirname(&home, &txid);
-                        let date =
-                            DateTime::from_timestamp(block_extra.block().header.time as i64, 0)
-                                .expect("invalid timestamp");
+        bsl::Block::visit(block_extra.block_bytes(), &mut visitor).expect("visit fail");
 
-                        let message = message::Message {
-                            txid: *txid,
-                            date,
-                            msg: str.to_string(),
-                        };
+        for (txid, str) in visitor.messages.iter() {
+            let page_dirname = page_dirname(&home, &txid);
+            let date = DateTime::from_timestamp(block_extra.block().header.time as i64, 0)
+                .expect("invalid timestamp");
 
-                        let mut page_filename = page_dirname;
-                        page_filename.push("index.html");
-                        let page = create_detail_page(&message);
-                        save_page(page_filename, page);
+            let message = message::Message {
+                txid: *txid,
+                date,
+                msg: str.to_string(),
+            };
 
-                        let value = years_map
-                            .entry(date.year().to_string())
-                            .or_insert(BTreeSet::new());
-                        value.insert(message);
-                    }
-                }
-            }
+            let mut page_filename = page_dirname;
+            page_filename.push("index.html");
+            let page = create_detail_page(&message);
+            save_page(page_filename, page);
+
+            let value = years_map
+                .entry(date.year().to_string())
+                .or_insert(BTreeSet::new());
+            value.insert(message);
         }
     }
     info!("end");
@@ -106,6 +104,39 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
+struct BlockVisitor {
+    messages: Vec<(Txid, String)>,
+    zero_txid: Txid,
+}
+impl BlockVisitor {
+    fn new() -> Self {
+        Self {
+            messages: vec![],
+            zero_txid: Hash::all_zeros(),
+        }
+    }
+}
+impl Visitor for BlockVisitor {
+    fn visit_tx_out(&mut self, _vout: usize, tx_out: &bsl::TxOut) -> core::ops::ControlFlow<()> {
+        let tx_out: bitcoin::TxOut = tx_out.into();
+        if tx_out.script_pubkey.is_op_return() {
+            if let Some(s) = ew_str_from_op_return(&tx_out.script_pubkey) {
+                self.messages.push((self.zero_txid, s));
+            }
+        }
+
+        core::ops::ControlFlow::Continue(())
+    }
+    fn visit_transaction(&mut self, tx: &bsl::Transaction) -> core::ops::ControlFlow<()> {
+        for (txid, _) in self.messages.iter_mut() {
+            if self.zero_txid == *txid {
+                *txid = tx.txid().into();
+            }
+        }
+        core::ops::ControlFlow::Continue(())
+    }
+}
+
 fn page_dirname(home: &PathBuf, txid: &Txid) -> PathBuf {
     let mut path = home.clone();
     path.push("m");
@@ -122,14 +153,14 @@ fn save_page(filename: PathBuf, page: String) {
     file.write(page.as_bytes()).unwrap();
 }
 
-fn ew_str_from_op_return(script: &Script) -> Option<&str> {
+fn ew_str_from_op_return(script: &Script) -> Option<String> {
     let mut instructions = script.instructions();
     if let Some(Ok(Instruction::Op(all))) = instructions.next() {
         if all == OP_RETURN {
             if let Some(Ok(Instruction::PushBytes(push_bytes))) = instructions.next() {
                 let bytes = push_bytes.as_bytes();
                 if bytes.len() > 2 && bytes[0] == 0x45 && bytes[1] == 0x57 {
-                    return Some(std::str::from_utf8(&bytes[2..]).ok()?);
+                    return Some(std::str::from_utf8(&bytes[2..]).ok()?.to_string());
                 }
             }
         }
@@ -177,6 +208,6 @@ mod test {
         ];
         let script = Script::from_bytes(&bytes[..]);
         let result = ew_str_from_op_return(&script);
-        assert_eq!(result, Some("Building the wall..."));
+        assert_eq!(result, Some("Building the wall...".to_string()));
     }
 }
