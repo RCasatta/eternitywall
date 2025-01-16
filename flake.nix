@@ -35,6 +35,7 @@
           src = ./.; # The original, unfiltered source
           filter = path: type:
             (lib.hasSuffix "\.ico" path) ||
+            (lib.hasSuffix "\.bin" path) || # for test_data/block.bin
             (craneLib.filterCargoSources path type)
           ;
         };
