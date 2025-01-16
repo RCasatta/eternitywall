@@ -44,20 +44,10 @@ fn main() -> Result<(), Error> {
 
     let iter = PipeIterator::new(io::stdin(), None);
 
-    let mut visitor = BlockVisitor::new();
     for block_extra in iter {
-        bsl::Block::visit(block_extra.block_bytes(), &mut visitor).expect("visit fail");
-
-        for (txid, str) in visitor.messages.iter() {
-            let page_dirname = page_dirname(&home, &txid);
-            let date = DateTime::from_timestamp(block_extra.block().header.time as i64, 0)
-                .expect("invalid timestamp");
-
-            let message = message::Message {
-                txid: *txid,
-                date,
-                msg: str.to_string(),
-            };
+        let msgs = find_msg_in_block(block_extra.block_bytes());
+        for message in msgs {
+            let page_dirname = page_dirname(&home, &message.txid);
 
             let mut page_filename = page_dirname;
             page_filename.push("index.html");
@@ -65,7 +55,7 @@ fn main() -> Result<(), Error> {
             save_page(page_filename, page);
 
             let value = years_map
-                .entry(date.year().to_string())
+                .entry(message.date.year().to_string())
                 .or_insert(BTreeSet::new());
             value.insert(message);
         }
@@ -104,19 +94,44 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
+fn find_msg_in_block(block_bytes: &[u8]) -> Vec<message::Message> {
+    let mut visitor = BlockVisitor::new();
+
+    bsl::Block::visit(block_bytes, &mut visitor).expect("visit fail");
+
+    let mut messages = vec![];
+    for (txid, str) in visitor.messages.iter() {
+        let date = DateTime::from_timestamp(visitor.time as i64, 0).expect("invalid timestamp");
+
+        let message = message::Message {
+            txid: *txid,
+            date,
+            msg: str.to_string(),
+        };
+        messages.push(message);
+    }
+    messages
+}
+
 struct BlockVisitor {
     messages: Vec<(Txid, String)>,
     zero_txid: Txid,
+    time: u32,
 }
 impl BlockVisitor {
     fn new() -> Self {
         Self {
             messages: vec![],
             zero_txid: Hash::all_zeros(),
+            time: 0,
         }
     }
 }
 impl Visitor for BlockVisitor {
+    fn visit_block_header(&mut self, header: &bsl::BlockHeader) -> core::ops::ControlFlow<()> {
+        self.time = header.time();
+        core::ops::ControlFlow::Continue(())
+    }
     fn visit_tx_out(&mut self, _vout: usize, tx_out: &bsl::TxOut) -> core::ops::ControlFlow<()> {
         let tx_out: bitcoin::TxOut = tx_out.into();
         if tx_out.script_pubkey.is_op_return() {
@@ -209,5 +224,20 @@ mod test {
         let script = Script::from_bytes(&bytes[..]);
         let result = ew_str_from_op_return(&script);
         assert_eq!(result, Some("Building the wall...".to_string()));
+    }
+
+    #[test]
+    fn test_find_msg_in_block() {
+        let block_bytes = include_bytes!(
+            "../test_data/000000000000000001536d790f5792bc015136dfee015ead92116beb32db878b.bin"
+        );
+        let msgs = crate::find_msg_in_block(&block_bytes[..]);
+        assert_eq!(msgs.len(), 1);
+        assert_eq!(msgs[0].msg, " BlockCypher Team = Awesome");
+        assert_eq!(msgs[0].date.to_string(), "2015-06-28 00:21:37 UTC");
+        assert_eq!(
+            msgs[0].txid.to_string(),
+            "8593956e0eef311a58b324b682b5edbd2ac43e2ef5829d07fc0000cb89a22516"
+        );
     }
 }
