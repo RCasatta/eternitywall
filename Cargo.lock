@@ -187,6 +187,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin_slices"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7943d4257fdfc85afe2a13d2b539a5213e97bb978329dd79b624acbce73042fb"
+dependencies = [
+ "bitcoin",
+ "bitcoin_hashes",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,7 +212,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b90fc4908f1f0f91ab39cf7024d388b9ce2337350c5802e715ca1444c5832b"
 dependencies = [
  "bitcoin",
- "bitcoin_slices",
+ "bitcoin_slices 0.9.1",
  "fxhash",
  "glob",
  "log",
@@ -349,7 +359,7 @@ name = "eternitywall-site"
 version = "0.1.0"
 dependencies = [
  "base64",
- "bitcoin_slices",
+ "bitcoin_slices 0.10.0",
  "blocks_iterator",
  "chrono",
  "clap",

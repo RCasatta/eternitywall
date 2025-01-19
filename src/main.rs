@@ -3,7 +3,7 @@ mod templates;
 
 use crate::templates::create_contact;
 use bitcoin_slices::bitcoin_hashes::Hash;
-use bitcoin_slices::{bitcoin, bsl, Visit, Visitor};
+use bitcoin_slices::{bsl, Visit, Visitor};
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
 use blocks_iterator::bitcoin::blockdata::script::Instruction;
 use blocks_iterator::bitcoin::{Script, Txid};
@@ -133,9 +133,9 @@ impl Visitor for BlockVisitor {
         core::ops::ControlFlow::Continue(())
     }
     fn visit_tx_out(&mut self, _vout: usize, tx_out: &bsl::TxOut) -> core::ops::ControlFlow<()> {
-        let tx_out: bitcoin::TxOut = tx_out.into();
-        if tx_out.script_pubkey.is_op_return() {
-            if let Some(s) = ew_str_from_op_return(&tx_out.script_pubkey) {
+        let script = tx_out.as_bitcoin_script();
+        if script.is_op_return() {
+            if let Some(s) = ew_str_from_op_return(&script) {
                 self.messages.push((self.zero_txid, s));
             }
         }

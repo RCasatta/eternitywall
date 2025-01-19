@@ -10,7 +10,7 @@ chrono = "0.4.19"
 maud = "0.23"
 log = "0.4.22"
 clap = { version = "4.5.26", features = ["derive"] }
-bitcoin_slices = { version = "0.9.1", features = ["bitcoin"] }
+bitcoin_slices = { version = "0.10.0", features = ["bitcoin"] }
 
 [dev-dependencies]
 base64 = "0.13.0"
