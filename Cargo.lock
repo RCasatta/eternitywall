@@ -177,23 +177,13 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_slices"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d2eede678354292a3e0c066e1c113f9868c705dfa8f91346d6b6f7c294205b0"
-dependencies = [
- "bitcoin",
- "bitcoin_hashes",
- "sha2",
-]
-
-[[package]]
-name = "bitcoin_slices"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943d4257fdfc85afe2a13d2b539a5213e97bb978329dd79b624acbce73042fb"
 dependencies = [
  "bitcoin",
  "bitcoin_hashes",
+ "sha2",
 ]
 
 [[package]]
@@ -207,12 +197,12 @@ dependencies = [
 
 [[package]]
 name = "blocks_iterator"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b90fc4908f1f0f91ab39cf7024d388b9ce2337350c5802e715ca1444c5832b"
+checksum = "bcd30f88cbd2159e96e951cce89961a09c51e2323723b2ba2009c1febae6b252"
 dependencies = [
  "bitcoin",
- "bitcoin_slices 0.9.1",
+ "bitcoin_slices",
  "fxhash",
  "glob",
  "log",
@@ -359,7 +349,7 @@ name = "eternitywall-site"
 version = "0.1.0"
 dependencies = [
  "base64",
- "bitcoin_slices 0.10.0",
+ "bitcoin_slices",
  "blocks_iterator",
  "chrono",
  "clap",
