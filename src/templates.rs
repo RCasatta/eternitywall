@@ -11,7 +11,7 @@ fn header() -> Markup {
         head {
             meta charset="utf-8";
             meta name="viewport" content="width=device-width, initial-scale=1.0";
-
+            script defer data-domain="eternitywall.it" src="https://plausible.casatta.it/js/script.js" { }
             title { "EternityWall" }
         }
     }
