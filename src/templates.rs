@@ -5,6 +5,24 @@ use std::collections::BTreeSet;
 
 const NBSP: PreEscaped<&str> = PreEscaped("&nbsp;");
 
+const CSS: &str = r#"
+        body {
+            margin: 40px auto;
+            max-width: 650px;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #444;
+            background-color: #f2f2f2;
+            padding: 0 10px
+        }
+
+        h1,
+        h2,
+        h3 {
+            line-height: 1.2
+        }
+    "#;
+
 /// A basic header with a dynamic `page_title`.
 fn header() -> Markup {
     html! {
@@ -12,6 +30,9 @@ fn header() -> Markup {
             meta charset="utf-8";
             meta name="viewport" content="width=device-width, initial-scale=1.0";
             script defer data-domain="eternitywall.it" src="https://plausible.casatta.it/js/script.js" { }
+            style type="text/css" {
+                (PreEscaped(CSS))
+            }
             title { "EternityWall" }
         }
     }
@@ -37,7 +58,7 @@ pub fn page(content: Markup) -> Markup {
         (DOCTYPE)
         html lang = "en" {
             (header())
-            body style="font-family: Arial, Helvetica, sans-serif;" {
+            body {
                 h1 { a href="/" { "EternityWall" } }
                 (NBSP)
                 (content)
