@@ -1,7 +1,6 @@
 mod message;
 mod templates;
 
-use crate::templates::create_contact;
 use bitcoin_slices::bitcoin_hashes::Hash;
 use bitcoin_slices::{bsl, Visit, Visitor};
 use blocks_iterator::bitcoin::blockdata::opcodes::all::OP_RETURN;
@@ -79,11 +78,6 @@ fn main() -> Result<(), Error> {
     about.push("about");
     about.push("index.html");
     save_page(about, create_about());
-
-    let mut contact = home.clone();
-    contact.push("contact");
-    contact.push("index.html");
-    save_page(contact, create_contact());
 
     // favicon
     let mut favicon_file = home.clone();
