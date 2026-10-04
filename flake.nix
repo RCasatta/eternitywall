@@ -46,7 +46,7 @@
 
           buildInputs = [
             # Add additional build inputs here
-          ] ++ lib.optionals pkgs.stdenv.isDarwin [
+          ] ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
           ];
@@ -119,7 +119,7 @@
 
         packages = {
           default = my-crate;
-        } // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+        } // lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isDarwin) {
           my-crate-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
