@@ -3,3 +3,4 @@
 _site/
 result
 target_dir/
+.direnv/
