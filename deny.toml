@@ -1,0 +1,9 @@
+[licenses]
+allow = [
+    "MIT",
+    "MITNFA",
+    "Apache-2.0",
+    "CC0-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+]
