@@ -170,7 +170,7 @@ mod test {
     fn test_page() {
         let content = html! { p { "Hello" } };
         let page = page(content).into_string();
-        assert_eq!("", to_data_url(&page, "text/html"));
+        assert_eq!("", to_data_url(page, "text/html"));
     }
 
     #[test]
@@ -196,7 +196,7 @@ mod test {
         map.insert("2020".to_string(), BTreeSet::new());
 
         let page = create_index_page(&map, true);
-        assert_eq!("", to_data_url(&page, "text/html"));
+        assert_eq!("", to_data_url(page, "text/html"));
     }
 
     #[ignore]
@@ -206,7 +206,7 @@ mod test {
         set.insert(get_message());
         set.insert(get_another_message());
         let page = create_list_page("2020", set);
-        assert_eq!("", to_data_url(&page, "text/html"));
+        assert_eq!("", to_data_url(page, "text/html"));
     }
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
         let base64 = base64::encode(input.as_ref());

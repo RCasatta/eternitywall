@@ -13,20 +13,23 @@ use chrono::{DateTime, Datelike, Utc};
 use clap::Parser;
 use env_logger::Env;
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{fs, io};
 use templates::{create_about, create_detail_page, create_index_page, create_list_page};
 
-#[derive(Debug)]
-enum Error {}
+type Error = Box<dyn std::error::Error>;
 
 #[derive(Parser, Debug, Clone)]
 struct Params {
-    /// Where to produce the website
+    /// Where to produce the website, the site is published in the `site` subdirectory
     #[clap(short, long)]
     pub target_dir: PathBuf,
+
+    /// Don't publish the site if the last block received is older than this many hours, since it
+    /// means the stream ended early (eg. the upstream process failed). 0 disables the check.
+    #[clap(long, default_value_t = 48)]
+    pub max_tip_age_hours: u64,
 }
 
 type MessagesByCat = BTreeMap<String, BTreeSet<message::Message>>;
@@ -38,13 +41,25 @@ fn main() -> Result<(), Error> {
     let mut years_map: MessagesByCat = BTreeMap::new();
 
     let params = Params::parse();
-    let mut home = params.target_dir.clone();
-    home.push("site");
+    let site = params.target_dir.join("site");
+
+    // The site is generated in a staging directory and swapped with the published one only if the
+    // input stream looks complete, so that a failure upstream doesn't publish an empty site.
+    let home = params.target_dir.join("site.new");
+    if home.exists() {
+        fs::remove_dir_all(&home)?;
+    }
 
     let iter = PipeIterator::new(io::stdin(), None);
 
+    let mut blocks = 0u64;
+    let mut last_height = 0u32;
+    let mut last_time = 0u32;
     for block_extra in iter {
-        let msgs = find_msg_in_block(block_extra.block_bytes());
+        blocks += 1;
+        last_height = block_extra.height();
+        let (time, msgs) = find_msg_in_block(block_extra.block_bytes());
+        last_time = time;
         for message in msgs {
             let page_dirname = page_dirname(&home, &message.txid);
 
@@ -55,11 +70,28 @@ fn main() -> Result<(), Error> {
 
             let value = years_map
                 .entry(message.date.year().to_string())
-                .or_insert(BTreeSet::new());
+                .or_default();
             value.insert(message);
         }
     }
-    info!("end");
+    info!("end, received {blocks} blocks, last height {last_height}");
+
+    if blocks == 0 {
+        return Err("no blocks received, not publishing the site".into());
+    }
+    if params.max_tip_age_hours > 0 {
+        let tip_age_secs = Utc::now().timestamp() - last_time as i64;
+        let max_secs = params.max_tip_age_hours as i64 * 3600;
+        if tip_age_secs > max_secs {
+            return Err(format!(
+                "last block at height {last_height} is {} hours old (max {}), \
+                 the stream probably ended early, not publishing the site",
+                tip_age_secs / 3600,
+                params.max_tip_age_hours
+            )
+            .into());
+        }
+    }
 
     let index_page = create_index_page(&years_map, true);
     let mut index_file = home.clone();
@@ -69,7 +101,7 @@ fn main() -> Result<(), Error> {
     for (k, v) in years_map {
         let page = create_list_page(&k.to_string(), v);
         let mut month_file = home.clone();
-        month_file.push(&k.to_string());
+        month_file.push(&k);
         month_file.push("index.html");
         save_page(month_file, page)
     }
@@ -82,13 +114,33 @@ fn main() -> Result<(), Error> {
     // favicon
     let mut favicon_file = home.clone();
     favicon_file.push("favicon.ico");
-    let favicon = include_bytes!("../target_dir/site/favicon.ico");
-    fs::write(favicon_file, &favicon).unwrap();
+    let favicon = include_bytes!("../assets/favicon.ico");
+    fs::write(favicon_file, favicon)?;
+
+    publish(&home, &site)?;
+    info!("site published in {}", site.display());
 
     Ok(())
 }
 
-fn find_msg_in_block(block_bytes: &[u8]) -> Vec<message::Message> {
+/// Replace `site` with `staging`, keeping the window where `site` is missing as short as possible.
+fn publish(staging: &Path, site: &Path) -> io::Result<()> {
+    let old = site.with_extension("old");
+    if old.exists() {
+        fs::remove_dir_all(&old)?;
+    }
+    if site.exists() {
+        fs::rename(site, &old)?;
+    }
+    fs::rename(staging, site)?;
+    if old.exists() {
+        fs::remove_dir_all(&old)?;
+    }
+    Ok(())
+}
+
+/// Returns the block timestamp and the messages found in the block
+fn find_msg_in_block(block_bytes: &[u8]) -> (u32, Vec<message::Message>) {
     let mut visitor = BlockVisitor::new();
 
     bsl::Block::visit(block_bytes, &mut visitor).expect("visit fail");
@@ -104,7 +156,7 @@ fn find_msg_in_block(block_bytes: &[u8]) -> Vec<message::Message> {
         };
         messages.push(message);
     }
-    messages
+    (visitor.time, messages)
 }
 
 struct BlockVisitor {
@@ -129,7 +181,7 @@ impl Visitor for BlockVisitor {
     fn visit_tx_out(&mut self, _vout: usize, tx_out: &bsl::TxOut) -> core::ops::ControlFlow<()> {
         let script = tx_out.as_bitcoin_script();
         if script.is_op_return() {
-            if let Some(s) = ew_str_from_op_return(&script) {
+            if let Some(s) = ew_str_from_op_return(script) {
                 self.messages.push((self.zero_txid, s));
             }
         }
@@ -146,8 +198,8 @@ impl Visitor for BlockVisitor {
     }
 }
 
-fn page_dirname(home: &PathBuf, txid: &Txid) -> PathBuf {
-    let mut path = home.clone();
+fn page_dirname(home: &Path, txid: &Txid) -> PathBuf {
+    let mut path = home.to_path_buf();
     path.push("m");
     path.push(txid.to_string());
     path
@@ -158,8 +210,7 @@ fn save_page(filename: PathBuf, page: String) {
     if !parent.exists() {
         std::fs::create_dir_all(parent).unwrap();
     }
-    let mut file = File::create(filename).unwrap();
-    file.write(page.as_bytes()).unwrap();
+    fs::write(filename, page).unwrap();
 }
 
 fn ew_str_from_op_return(script: &Script) -> Option<String> {
@@ -216,7 +267,7 @@ mod test {
             0x68, 0x65, 0x20, 0x77, 0x61, 0x6c, 0x6c, 0x2e, 0x2e, 0x2e,
         ];
         let script = Script::from_bytes(&bytes[..]);
-        let result = ew_str_from_op_return(&script);
+        let result = ew_str_from_op_return(script);
         assert_eq!(result, Some("Building the wall...".to_string()));
     }
 
@@ -225,7 +276,8 @@ mod test {
         let block_bytes = include_bytes!(
             "../test_data/000000000000000001536d790f5792bc015136dfee015ead92116beb32db878b.bin"
         );
-        let msgs = crate::find_msg_in_block(&block_bytes[..]);
+        let (time, msgs) = crate::find_msg_in_block(&block_bytes[..]);
+        assert_eq!(time, 1435450897);
         assert_eq!(msgs.len(), 1);
         assert_eq!(msgs[0].msg, " BlockCypher Team = Awesome");
         assert_eq!(msgs[0].date.to_string(), "2015-06-28 00:21:37 UTC");

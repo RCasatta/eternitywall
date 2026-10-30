@@ -29,7 +29,7 @@ impl Ord for Message {
 }
 impl PartialOrd for Message {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 impl PartialEq for Message {
@@ -48,14 +48,14 @@ pub mod test {
     pub fn get_message() -> Message {
         Message {
             msg: "Atoms are made of universes".to_string(),
-            date: DateTime::from_timestamp(1445192722 as i64, 0).unwrap(),
+            date: DateTime::from_timestamp(1445192722_i64, 0).unwrap(),
             txid: Hash::all_zeros(),
         }
     }
     pub fn get_another_message() -> Message {
         Message {
             msg: "Ciao mi chiamo Gianni e sono italiano".to_string(),
-            date: DateTime::from_timestamp(1445194722 as i64, 0).unwrap(),
+            date: DateTime::from_timestamp(1445194722_i64, 0).unwrap(),
             txid: Hash::all_zeros(),
         }
     }
