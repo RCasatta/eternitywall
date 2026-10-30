@@ -209,7 +209,8 @@ mod test {
         assert_eq!("", to_data_url(page, "text/html"));
     }
     fn to_data_url<T: AsRef<[u8]>>(input: T, content_type: &str) -> String {
-        let base64 = base64::encode(input.as_ref());
+        use base64::Engine;
+        let base64 = base64::engine::general_purpose::STANDARD.encode(input.as_ref());
         format!("data:{};base64,{}", content_type, base64)
     }
 }

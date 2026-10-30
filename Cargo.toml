@@ -5,13 +5,13 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-blocks_iterator = { version = "2.1.1", default-features = false }
-env_logger = "0.9"
-chrono = "0.4.19"
-maud = "0.23"
-log = "0.4.22"
-clap = { version = "4.5.26", features = ["derive"] }
-bitcoin_slices = { version = "0.10.0", features = ["bitcoin"] }
+blocks_iterator = { version = "3.0.0", default-features = false }
+env_logger = "0.11"
+chrono = "0.4.45"
+maud = "0.27"
+log = "0.4.34"
+clap = { version = "4.6.7", features = ["derive"] }
+bitcoin_slices = { version = "0.13.0", features = ["bitcoin"] }
 
 [dev-dependencies]
-base64 = "0.13.0"
+base64 = "0.23"
